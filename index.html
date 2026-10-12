@@ -34,7 +34,6 @@
       </a>
       <nav class="nav__links" id="navLinks" aria-label="Main">
         <a href="#drop">Drop 01</a>
-        <a href="#gallery">Gallery</a>
         <a href="#about">About</a>
         <a href="#contact">Contact</a>
       </nav>
@@ -96,17 +95,6 @@
       <div class="releases" id="releases"></div>
     </section>
 
-    <section class="gallery section" id="gallery" aria-labelledby="galleryTitle">
-      <div class="section__head">
-        <div>
-          <p class="eyebrow mono">Gallery · Memories</p>
-          <h2 id="galleryTitle">From the studio</h2>
-        </div>
-        <p class="section__note">Stills from our early days.<br>Tap a photo to see it full size.</p>
-      </div>
-      <div class="frames" id="frames"></div>
-    </section>
-
     <section class="about section" id="about" aria-labelledby="aboutTitle">
       <div class="about__grid">
         <div class="about__copy">
@@ -120,7 +108,7 @@
         </figure>
       </div>
       <ol class="process">
-        <li><span class="mono">Step 1</span><h3>Sketch</h3><p>Every design starts as a drawing, like the hand-painted flags in our gallery.</p></li>
+        <li><span class="mono">Step 1</span><h3>Sketch</h3><p>Every design starts as a drawing, like our hand-painted OG flags.</p></li>
         <li><span class="mono">Step 2</span><h3>Sample</h3><p>We test fabric, fit and print until the tee feels right.</p></li>
         <li><span class="mono">Step 3</span><h3>Print</h3><p>A small first run, checked piece by piece.</p></li>
         <li><span class="mono">Step 4</span><h3>Drop</h3><p>Released on a set date, announced first to people on our list.</p></li>
@@ -181,12 +169,16 @@
       </div>
     </section>
 
-    <section class="join section" aria-labelledby="joinTitle">
+    <section class="join" aria-labelledby="joinTitle">
+      <div class="join__bg" aria-hidden="true"></div>
+      <div class="join__inner">
+      <p class="eyebrow mono join__eyebrow">Hand-painted OG flags · where it started</p>
       <h2 id="joinTitle">Be first when Drop 01 lands</h2>
       <p>Send us a hi on WhatsApp and we'll message you on release day. Sneak peeks go up on Instagram first.</p>
       <div class="join__actions">
         <a class="btn btn--solid" data-wa="Hi theOG's! Please notify me when Drop 01 is out." href="https://wa.me/918897004533" target="_blank" rel="noopener">Notify me on WhatsApp</a>
         <a class="btn btn--ghost" href="https://instagram.com/theogs_fashion" target="_blank" rel="noopener">@theogs_fashion</a>
+      </div>
       </div>
     </section>
   </main>
@@ -196,22 +188,10 @@
     <div class="footer__row">
       <p>© <span id="year">2026</span> theOG's · Navi Mumbai · <a href="mailto:theogs1807@gmail.com">theogs1807@gmail.com</a></p>
       <nav aria-label="Footer">
-        <a href="#drop">Drop 01</a><a href="#gallery">Gallery</a><a href="#about">About</a><a href="#contact">Contact</a><a href="https://instagram.com/theogs_fashion" target="_blank" rel="noopener">Instagram</a>
+        <a href="#drop">Drop 01</a><a href="#about">About</a><a href="#contact">Contact</a><a href="https://instagram.com/theogs_fashion" target="_blank" rel="noopener">Instagram</a>
       </nav>
     </div>
   </footer>
-
-  <!-- Photo viewer -->
-  <div class="viewer" id="viewer" hidden>
-    <div class="viewer__scrim" data-close></div>
-    <figure class="viewer__panel" role="dialog" aria-modal="true" aria-label="Photo">
-      <img id="viewerImg" alt="">
-      <figcaption id="viewerCap" class="mono"></figcaption>
-      <button class="icon-btn viewer__close" data-close aria-label="Close photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-      <button class="icon-btn viewer__prev" id="viewerPrev" aria-label="Previous photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
-      <button class="icon-btn viewer__next" id="viewerNext" aria-label="Next photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
-    </figure>
-  </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

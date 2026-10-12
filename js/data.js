@@ -1,4 +1,4 @@
-/* Site content. Edit this file to update the drop and the gallery. */
+/* Site content. Edit this file to update the drop and contact details. */
 
 /* Drop 01. When the mockups are ready, put them in assets/drop/ and set
    `mockup: "assets/drop/tee-01.jpg"`. Until then a placeholder tee is drawn. */
@@ -27,12 +27,6 @@ window.OG_RELEASES = [
     print: "OG'S",
     theme: "bone"
   }
-];
-
-/* Gallery / memories. Add photos to assets/gallery/ and list them here. */
-window.OG_GALLERY = [
-  { src: "assets/gallery/og-flags.jpg", w: 960, h: 1280, caption: "Hand-painted OG flags, the first designs" },
-  { src: "assets/gallery/og-blue.jpg", w: 1600, h: 1600, caption: "theOG's, blue edition" }
 ];
 
 window.OG_CONTACT = {

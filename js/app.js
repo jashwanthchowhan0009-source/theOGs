@@ -2,8 +2,7 @@
   "use strict";
 
   const RELEASES = window.OG_RELEASES;
-  const GALLERY = window.OG_GALLERY;
-  const CONTACT = window.OG_CONTACT;
+    const CONTACT = window.OG_CONTACT;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -57,12 +56,23 @@
     root.style.setProperty("--og-p", (eased * 100).toFixed(1) + "%");
   }
 
+  // The flags photo behind the sign-up band drifts slightly slower than the page.
+  const joinEl = $(".join");
+  function parallaxJoin() {
+    if (reduceMotion || !joinEl) return;
+    const r = joinEl.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > window.innerHeight) return;
+    const k = (r.top + r.height / 2 - window.innerHeight / 2) / window.innerHeight;
+    joinEl.style.setProperty("--join-shift", (k * -40).toFixed(1) + "px");
+  }
+
   function onScroll() {
     const y = window.scrollY;
     nav.classList.toggle("scrolled", y > 8);
     nav.classList.toggle("hide", y > lastY && y > 500 && !links.classList.contains("open"));
     lastY = y;
     paintOG();
+    parallaxJoin();
     ticking = false;
   }
   window.addEventListener("scroll", () => {
@@ -87,7 +97,7 @@
         if (en.isIntersecting) $$(".nav__links a").forEach((a) => a.classList.toggle("active", a.getAttribute("href") === "#" + en.target.id));
       });
     }, { rootMargin: "-45% 0px -50% 0px" });
-    ["drop", "gallery", "about", "contact"].forEach((id) => spy.observe(document.getElementById(id)));
+    ["drop", "about", "contact"].forEach((id) => spy.observe(document.getElementById(id)));
   }
 
   /* ---------- Hero stage ---------- */
@@ -153,84 +163,13 @@
     });
   }
 
-  /* ---------- Gallery ---------- */
-  const frames = $("#frames");
-  frames.innerHTML = GALLERY.map((g, i) => `
-    <figure class="frame" style="--ar:${g.w} / ${g.h}">
-      <button class="frame__btn" data-photo="${i}" aria-label="Open photo: ${g.caption}">
-        <img src="${g.src}" alt="${g.caption}" width="${g.w}" height="${g.h}" loading="lazy">
-      </button>
-      <figcaption><span class="mono">${String(i + 1).padStart(2, "0")} / ${String(GALLERY.length).padStart(2, "0")}</span>${g.caption}</figcaption>
-    </figure>`).join("") + `
-    <figure class="frame frame--more">
-      <a class="frame__btn" href="https://instagram.com/${CONTACT.instagram}" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.8" cy="7.2" r=".6"/></svg>
-        <strong>More on Instagram</strong>
-        <span>@${CONTACT.instagram}</span>
-      </a>
-      <figcaption><span class="mono">++</span>New shoots go up there first</figcaption>
-    </figure>`;
-
-  const viewer = $("#viewer");
-  let current = 0;
-  let viewerFocus;
-  function showPhoto(i) {
-    current = (i + GALLERY.length) % GALLERY.length;
-    const g = GALLERY[current];
-    $("#viewerImg").src = g.src;
-    $("#viewerImg").alt = g.caption;
-    $("#viewerCap").textContent = `${String(current + 1).padStart(2, "0")} / ${String(GALLERY.length).padStart(2, "0")} · ${g.caption}`;
-    const many = GALLERY.length > 1;
-    $("#viewerPrev").hidden = !many;
-    $("#viewerNext").hidden = !many;
-  }
-  function openViewer(i) {
-    viewerFocus = document.activeElement;
-    showPhoto(i);
-    viewer.hidden = false;
-    document.body.classList.add("locked");
-    requestAnimationFrame(() => { viewer.classList.add("open"); $(".viewer__close", viewer).focus(); });
-  }
-  function closeViewer() {
-    viewer.classList.remove("open");
-    document.body.classList.remove("locked");
-    setTimeout(() => { viewer.hidden = true; }, reduceMotion ? 0 : 300);
-    if (viewerFocus && viewerFocus.focus) viewerFocus.focus();
-  }
-  frames.addEventListener("click", (e) => { const b = e.target.closest("[data-photo]"); if (b) openViewer(+b.dataset.photo); });
-  viewer.addEventListener("click", (e) => { if (e.target.closest("[data-close]")) closeViewer(); });
-  $("#viewerPrev").addEventListener("click", () => showPhoto(current - 1));
-  $("#viewerNext").addEventListener("click", () => showPhoto(current + 1));
-
-  // Swipe between photos on touch screens.
-  let touchX = null;
-  viewer.addEventListener("touchstart", (e) => { touchX = e.touches[0].clientX; }, { passive: true });
-  viewer.addEventListener("touchend", (e) => {
-    if (touchX === null) return;
-    const dx = e.changedTouches[0].clientX - touchX;
-    if (Math.abs(dx) > 50) showPhoto(current + (dx < 0 ? 1 : -1));
-    touchX = null;
-  });
-
   document.addEventListener("keydown", (e) => {
-    if (!viewer.hidden) {
-      if (e.key === "Escape") closeViewer();
-      if (e.key === "ArrowRight") showPhoto(current + 1);
-      if (e.key === "ArrowLeft") showPhoto(current - 1);
-      if (e.key === "Tab") {
-        const f = $$("button:not([hidden])", viewer);
-        const first = f[0], last = f[f.length - 1];
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-      }
-      return;
-    }
     if (e.key === "Escape" && links.classList.contains("open")) setMenu(false);
   });
 
   /* ---------- Reveal on scroll ---------- */
   if ("IntersectionObserver" in window && !reduceMotion) {
-    const revealEls = $$(".section__head, .release, .frame, .about__copy, .about__mark, .process li, .contact__grid > *, .join");
+    const revealEls = $$(".section__head, .release, .about__copy, .about__mark, .process li, .contact__grid > *, .join");
     const io = new IntersectionObserver((entries) => {
       entries.forEach((en) => {
         if (!en.isIntersecting) return;
@@ -243,7 +182,7 @@
       // Only hide what starts below the fold, so the first frame is complete.
       if (el.getBoundingClientRect().top > window.innerHeight) {
         el.classList.add("pre");
-        if (el.matches(".process li, .release, .frame")) el.style.transitionDelay = (i % 3) * 90 + "ms";
+        if (el.matches(".process li, .release")) el.style.transitionDelay = (i % 3) * 90 + "ms";
       }
       io.observe(el);
     });

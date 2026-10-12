@@ -6,7 +6,7 @@ Website for **theOG's**, a streetwear label from Navi Mumbai. Plain HTML, CSS an
 
 - **Hero** with the red velvet logo and the two Drop 01 tees floating over it
 - **Drop 01** showcase: two large panels, one per t-shirt, with a pointer spotlight, a "Mockup coming soon" slot and a WhatsApp "Notify me" button
-- **Gallery** of brand stills with a full-screen viewer (swipe, arrow keys) and an Instagram tile
+- **Sign-up band** over the hand-painted OG flags photo, with WhatsApp and Instagram buttons
 - **About**, **process** and **contact** sections
 - The "OG" in the header wordmark shifts from blue to red velvet as you scroll
 - Light and dark themes (follows the system, with a toggle), mobile menu, reduced-motion support
@@ -28,14 +28,14 @@ css/styles.css      all styles; colour and font tokens at the top
 js/data.js          Drop 01 tees, gallery photos, contact details
 js/garments.js      placeholder tee illustrations (SVG)
 js/app.js           drop panels, gallery viewer, scroll effects, forms
-assets/             logo, favicon, gallery photos
+assets/             logo, favicon, flags photo
 ```
 
 ## Making it yours
 
 **Drop 01 mockups.** Put the images in `assets/drop/` and set `mockup: "assets/drop/tee-01.jpg"` on each tee in `js/data.js`. You can also set `name`, `line` and `price` there. Until a mockup is set, an illustrated tee is shown.
 
-**Gallery photos.** Put photos in `assets/gallery/` and add a line for each to `OG_GALLERY` in `js/data.js` (`src`, `w`, `h`, `caption`). Resize large photos to about 1600 px on the long side first.
+**Background photo.** The sign-up band uses `assets/gallery/og-flags.jpg`; swap the file to change it.
 
 **Brand colours and fonts.** Change the tokens at the top of `css/styles.css` (`--accent`, `--bg`, `--f-display` and so on).
 

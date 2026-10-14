@@ -4,11 +4,10 @@ Website for **theOG's**, a streetwear label from Navi Mumbai. Plain HTML, CSS an
 
 ## What's on the site
 
-- **Hero** with the red velvet logo and the two Drop 01 tees floating over it
-- **Drop 01** showcase: two large panels, one per t-shirt, with a pointer spotlight, a "Mockup coming soon" slot and a WhatsApp "Notify me" button
-- **Sign-up band** over the hand-painted OG flags photo, with WhatsApp and Instagram buttons
-- **About**, **process** and **contact** sections
-- The "OG" in the header wordmark shifts from blue to red velvet as you scroll
+- **Hero** with the green theOG's logo and the two Doomsday tees
+- **The Doomsday drop**: one panel per tee with a mockup slideshow (arrows, thumbnails, swipe), offer price with the MRP struck off, specs, a size picker and an "Order on WhatsApp" button that sends the tee, colour, size and price
+- **About**, **process** and **contact** sections, and a sign-up band over the hand-painted OG flags photo
+- The "OG" in the header wordmark shifts from blue to green as you scroll
 - Light and dark themes (follows the system, with a toggle), mobile menu, reduced-motion support
 
 ## Run it locally
@@ -25,15 +24,14 @@ Opening `index.html` directly also works.
 ```
 index.html          page markup
 css/styles.css      all styles; colour and font tokens at the top
-js/data.js          Drop 01 tees, gallery photos, contact details
-js/garments.js      placeholder tee illustrations (SVG)
-js/app.js           drop panels, gallery viewer, scroll effects, forms
+js/data.js          the drop's tees and prices, contact details
+js/app.js           drop panels, slideshows, WhatsApp orders, scroll effects
 assets/             logo, favicon, flags photo
 ```
 
 ## Making it yours
 
-**Drop 01 mockups.** Put the images in `assets/drop/` and set `mockup: "assets/drop/tee-01.jpg"` on each tee in `js/data.js`. You can also set `name`, `line` and `price` there. Until a mockup is set, an illustrated tee is shown.
+**Tees, prices and mockups.** Everything about the drop lives in `OG_RELEASES` in `js/data.js`: name, colour, fit, fabric, print, sizes, `price`, `mrp` (shown struck off) and the `mockups` list (first image is the cover). Put mockup images in `assets/drop/`.
 
 **Background photo.** The sign-up band uses `assets/gallery/og-flags.jpg`; swap the file to change it.
 

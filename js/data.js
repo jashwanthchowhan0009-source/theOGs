@@ -1,31 +1,47 @@
 /* Site content. Edit this file to update the drop and contact details. */
 
-/* Drop 01. When the mockups are ready, put them in assets/drop/ and set
-   `mockup: "assets/drop/tee-01.jpg"`. Until then a placeholder tee is drawn. */
+/* The Doomsday drop. Mockups live in assets/drop/; the first one is the cover.
+   Prices are in rupees. Set `mrp` to show a struck-off price next to `price`. */
 window.OG_RELEASES = [
   {
-    id: "tee-01",
+    id: "doomsday",
     number: "01",
-    name: "Tee 01",
-    line: "Design reveal coming soon.",
-    status: "Coming soon",
-    price: "",              // e.g. "₹1,299"
-    mockup: "",             // e.g. "assets/drop/tee-01.jpg"
-    teeColor: "#F2F0EA",
-    print: "OG",
-    theme: "velvet"         // velvet or bone
+    name: "Doomsday",
+    line: "The mask goes on. Big green Doomsday back print on a washed black tee.",
+    color: "Black",
+    fit: "Oversized",
+    fabric: "240 GSM cotton",
+    print: "Screen print",
+    sizes: ["M", "L", "XL"],
+    mrp: 999,
+    price: 699,
+    offer: "Dussehra offer",
+    mockups: [
+      "assets/drop/doomsday-1.jpg",
+      "assets/drop/doomsday-2.jpg",
+      "assets/drop/doomsday-3.jpg",
+      "assets/drop/doomsday-4.jpg"
+    ]
   },
   {
-    id: "tee-02",
+    id: "rdj-doom",
     number: "02",
-    name: "Tee 02",
-    line: "Design reveal coming soon.",
-    status: "Coming soon",
-    price: "",
-    mockup: "",
-    teeColor: "#151517",
-    print: "OG'S",
-    theme: "bone"
+    name: "RDJ Doom",
+    line: "New mask, same task. A full-colour comic-cover back print on a cream tee.",
+    color: "Cream",
+    fit: "Oversized",
+    fabric: "240 GSM cotton",
+    print: "DTF print",
+    sizes: ["M", "L", "XL"],
+    mrp: 999,
+    price: 669,
+    offer: "Dussehra offer",
+    mockups: [
+      "assets/drop/rdj-doom-1.jpg",
+      "assets/drop/rdj-doom-2.jpg",
+      "assets/drop/rdj-doom-3.jpg",
+      "assets/drop/rdj-doom-4.jpg"
+    ]
   }
 ];
 

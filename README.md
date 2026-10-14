@@ -7,7 +7,7 @@ Website for **theOG's**, a streetwear label from Navi Mumbai. Plain HTML, CSS an
 - **Hero** with the green theOG's logo and the two Doomsday tees
 - **The Doomsday drop**: one panel per tee with a mockup slideshow (arrows, thumbnails, swipe), offer price with the MRP struck off, specs, a size picker and an "Order on WhatsApp" button that sends the tee, colour, size and price
 - **About**, **process** and **contact** sections, and a sign-up band over the hand-painted OG flags photo
-- The "OG" in the header wordmark shifts from blue to green as you scroll
+- The "OG" in the wordmark is always red, the brand's signature colour
 - Light and dark themes (follows the system, with a toggle), mobile menu, reduced-motion support
 
 ## Run it locally

@@ -47,15 +47,6 @@
   let lastY = window.scrollY;
   let ticking = false;
 
-  // "OG" in the wordmark shifts from blue to red over the first stretch of scrolling.
-  function paintOG() {
-    const y = window.scrollY;
-    const span = Math.max(600, window.innerHeight * 1.1);
-    const p = Math.min(1, Math.max(0, y / span));
-    const eased = p * p * (3 - 2 * p);
-    root.style.setProperty("--og-p", (eased * 100).toFixed(1) + "%");
-  }
-
   // The flags photo behind the sign-up band drifts slightly slower than the page.
   const joinEl = $(".join");
   function parallaxJoin() {
@@ -71,14 +62,12 @@
     nav.classList.toggle("scrolled", y > 8);
     nav.classList.toggle("hide", y > lastY && y > 500 && !links.classList.contains("open"));
     lastY = y;
-    paintOG();
     parallaxJoin();
     ticking = false;
   }
   window.addEventListener("scroll", () => {
     if (!ticking) { ticking = true; requestAnimationFrame(onScroll); }
   }, { passive: true });
-  window.addEventListener("resize", paintOG);
 
   function setMenu(open) {
     if (open) links.style.top = nav.getBoundingClientRect().bottom + "px";
@@ -274,5 +263,4 @@
 
   $("#year").textContent = new Date().getFullYear();
   wireWhatsApp(document);
-  paintOG();
 })();

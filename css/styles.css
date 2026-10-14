@@ -12,9 +12,7 @@
   --brand-deep: #063F19;
   --bone: #E6E1D6;
   --ink: #141418;
-  --og-blue: #2F45D8;
-  --og-end: #0B5E27;
-  --og-p: 0%;
+  --og-red: #C8102E;
   --danger: #B3261E;
   --ok: #1D7A45;
   --scrim: rgba(12, 12, 16, .45);
@@ -33,13 +31,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #111114; --surface: #19191E; --tile: #202027; --fg: #ECEBE6; --muted: #9D9DA7;
-    --line: rgba(236, 235, 230, .14); --accent: #3FC36B; --accent-ink: #04140A; --og-blue: #7C8BFF; --og-end: #4CD47A;
+    --line: rgba(236, 235, 230, .14); --accent: #3FC36B; --accent-ink: #04140A; --og-red: #FF4D5E;
     --danger: #FF8A80; --ok: #6FD39A; --scrim: rgba(0, 0, 0, .6); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #111114; --surface: #19191E; --tile: #202027; --fg: #ECEBE6; --muted: #9D9DA7;
-  --line: rgba(236, 235, 230, .14); --accent: #3FC36B; --accent-ink: #04140A; --og-blue: #7C8BFF; --og-end: #4CD47A;
+  --line: rgba(236, 235, 230, .14); --accent: #3FC36B; --accent-ink: #04140A; --og-red: #FF4D5E;
   --danger: #FF8A80; --ok: #6FD39A; --scrim: rgba(0, 0, 0, .6); color-scheme: dark;
 }
 
@@ -120,11 +118,8 @@ p { margin: 0; }
 .logo:hover img { transform: rotate(-6deg) scale(1.05); }
 .logo__word { font: 800 24px/1 var(--f-display); font-stretch: 112%; letter-spacing: -.02em; }
 .logo__word b, .footer__big b {
-  font-weight: 900; color: var(--og-blue);
-  color: color-mix(in oklab, var(--og-end) var(--og-p), var(--og-blue));
-  transition: color .25s linear;
+  font-weight: 900; color: var(--og-red);
 }
-.footer__big b { --og-p: 100%; }
 .nav__cta { margin-left: 8px; }
 .nav__links { display: flex; gap: 32px; margin-left: auto; }
 .nav__links a { text-decoration: none; font-weight: 500; font-size: 15px; position: relative; padding: 6px 0; }
@@ -312,7 +307,7 @@ h2 { font: 900 clamp(36px, 6vw, 76px)/.92 var(--f-display); font-stretch: 118%; 
   font: 900 clamp(56px, 16.5vw, 250px)/.8 var(--f-display); font-stretch: 125%; letter-spacing: -.06em; text-align: center;
   margin: clamp(24px, 4vw, 48px) 0 24px; white-space: nowrap; color: var(--tile);
 }
-.footer__big b { color: var(--accent); font-weight: 900; }
+.footer__big b { color: var(--og-red); font-weight: 900; }
 .footer__row { max-width: var(--max); margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; font-size: 13px; color: var(--muted); }
 .footer__row nav { display: flex; gap: 20px; }
 .footer__row a { text-decoration: none; }

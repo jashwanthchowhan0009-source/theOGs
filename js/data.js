@@ -20,7 +20,8 @@ window.OG_RELEASES = [
       "assets/drop/doomsday-1.jpg",
       "assets/drop/doomsday-2.jpg",
       "assets/drop/doomsday-3.jpg",
-      "assets/drop/doomsday-4.jpg"
+      "assets/drop/doomsday-4.jpg",
+      "assets/drop/doomsday-5.jpg"
     ]
   },
   {

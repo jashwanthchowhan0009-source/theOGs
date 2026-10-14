@@ -21,8 +21,8 @@
 
   <div class="ticker" aria-label="Announcements">
     <div class="ticker__track">
-      <span>The Doomsday drop is here</span><span>Dussehra offer: from ₹669</span><span>Oversized · 240 GSM</span><span>Order on WhatsApp</span><span>@theogs_fashion</span>
-      <span aria-hidden="true">The Doomsday drop is here</span><span aria-hidden="true">Dussehra offer: from ₹669</span><span aria-hidden="true">Oversized · 240 GSM</span><span aria-hidden="true">Order on WhatsApp</span><span aria-hidden="true">@theogs_fashion</span>
+      <span>The Doomsday drop is here</span><span>Dussehra offer: from ₹669</span><span>Oversized · 240 GSM</span><span>Delivering across South India</span><span>@theogs_fashion</span>
+      <span aria-hidden="true">The Doomsday drop is here</span><span aria-hidden="true">Dussehra offer: from ₹669</span><span aria-hidden="true">Oversized · 240 GSM</span><span aria-hidden="true">Delivering across South India</span><span aria-hidden="true">@theogs_fashion</span>
     </div>
   </div>
 
@@ -40,6 +40,10 @@
       <div class="nav__actions">
         <button class="icon-btn" id="themeToggle" aria-label="Switch colour theme" title="Switch theme">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg>
+        </button>
+        <button class="icon-btn" id="cartBtn" aria-label="Open cart" aria-controls="cart">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.1a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+          <span class="count" hidden>0</span>
         </button>
         <a class="btn btn--solid btn--sm nav__cta" href="#drop">Shop the drop</a>
         <button class="icon-btn burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
@@ -90,7 +94,7 @@
           <p class="eyebrow mono">New merch · Two tees</p>
           <h2 id="dropTitle">The Doomsday drop</h2>
         </div>
-        <p class="section__note">Pick a size and order on WhatsApp.<br>Dussehra prices while stocks last.</p>
+        <p class="section__note">Pick a size, add to cart and check out.<br>Delivering across South India. Dussehra prices while stocks last.</p>
       </div>
       <div class="releases" id="releases"></div>
     </section>
@@ -193,9 +197,23 @@
     </div>
   </footer>
 
+  <div class="drawer" id="cart" role="dialog" aria-modal="true" aria-labelledby="cartTitle" hidden>
+    <div class="drawer__panel">
+      <div class="drawer__head">
+        <h2 id="cartTitle">Your cart</h2>
+        <button class="icon-btn drawer__close" data-close aria-label="Close cart">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="drawer__body" id="cartBody"></div>
+      <div class="drawer__foot" id="cartFoot" hidden></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

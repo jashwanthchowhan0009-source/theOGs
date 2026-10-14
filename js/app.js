@@ -2,26 +2,18 @@
   "use strict";
 
   const RELEASES = window.OG_RELEASES;
-    const CONTACT = window.OG_CONTACT;
+  const CONTACT = window.OG_CONTACT;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const root = document.documentElement;
 
-  /* Storage that never throws (private windows, blocked storage). */
-  const store = {
-    get(k, fallback) { try { const v = localStorage.getItem("og:" + k); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } },
-    set(k, v) { try { localStorage.setItem("og:" + k, JSON.stringify(v)); } catch (e) { /* ignore */ } }
-  };
-
-  const waLink = (text) => `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(text)}`;
+  const { store, inr, esc, waLink, cart } = window.OG;
   function wireWhatsApp(scope) {
     $$("[data-wa]", scope).forEach((a) => { a.href = waLink(a.dataset.wa); });
   }
 
-  /* ---------- Theme ---------- */
-  const savedTheme = store.get("theme", null);
-  if (savedTheme) root.setAttribute("data-theme", savedTheme);
+  /* ---------- Theme (the saved choice is applied in store.js) ---------- */
   $("#themeToggle").addEventListener("click", () => {
     const current = root.getAttribute("data-theme") ||
       (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -91,7 +83,6 @@
 
   /* ---------- Hero stage ---------- */
   const stage = $("#heroStage");
-  const inr = (n) => "₹" + Number(n).toLocaleString("en-IN");
   $(".stage__item--a", stage).innerHTML = `<img src="${RELEASES[0].mockups[0]}" alt="">`;
   $(".stage__item--b", stage).innerHTML = `<img src="${RELEASES[1].mockups[0]}" alt="">`;
   if (!reduceMotion && window.matchMedia("(hover: hover)").matches) {
@@ -151,9 +142,16 @@
           </div>
           <p class="sizepick__hint" role="status"></p>
         </div>
-        <a class="btn btn--solid btn--order" data-order="${r.id}" href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener">
+        <div class="buy">
+          <button class="btn btn--ghost btn--buy" data-add="${r.id}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.1a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+            Add to cart
+          </button>
+          <button class="btn btn--solid btn--buy" data-buynow="${r.id}">Buy now · ${inr(r.price)}</button>
+        </div>
+        <a class="release__wa" data-order="${r.id}" href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-4A8 8 0 1 1 8 18.7L4 20Z"/></svg>
-          Order on WhatsApp · ${inr(r.price)}
+          Or order on WhatsApp
         </a>
       </div>
     </article>`;
@@ -185,11 +183,18 @@
     });
   });
 
-  // Size picker and the WhatsApp order message.
+  // Size picker, add to cart, buy now, and the WhatsApp order message.
   $$(".release").forEach((card) => {
     const r = RELEASES.find((x) => x.id === card.id);
-    const order = $(".btn--order", card);
+    const wa = $(".release__wa", card);
     const hint = $(".sizepick__hint", card);
+    const needSize = () => {
+      if (chosen[r.id]) return false;
+      hint.textContent = "Pick a size first.";
+      const s = $(".sizes", card); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");
+      $(".size", card).focus({ preventScroll: true });
+      return true;
+    };
     $(".sizes", card).addEventListener("click", (e) => {
       const b = e.target.closest(".size");
       if (!b) return;
@@ -197,15 +202,115 @@
       $$(".size", card).forEach((x) => x.setAttribute("aria-checked", String(x === b)));
       $("[data-size-label]", card).textContent = b.dataset.size;
       hint.textContent = "";
-      order.href = waLink(orderText(r, b.dataset.size));
+      wa.href = waLink(orderText(r, b.dataset.size));
     });
-    order.addEventListener("click", (e) => {
-      if (chosen[r.id]) return;
-      e.preventDefault();
-      hint.textContent = "Pick a size first.";
-      const s = $(".sizes", card); s.classList.remove("shake"); void s.offsetWidth; s.classList.add("shake");
+    $("[data-add]", card).addEventListener("click", () => {
+      if (needSize()) return;
+      const { capped } = cart.add(r.id, chosen[r.id]);
+      if (capped) toast(`You can order up to ${window.OG_STORE.maxQty} of one size.`);
+      openCart();
     });
+    $("[data-buynow]", card).addEventListener("click", () => {
+      if (needSize()) return;
+      if (!cart.items().some((l) => l.id === r.id && l.size === chosen[r.id])) cart.add(r.id, chosen[r.id]);
+      location.href = "checkout.html";
+    });
+    wa.addEventListener("click", (e) => { if (needSize()) e.preventDefault(); });
   });
+
+  /* ---------- Cart drawer ---------- */
+  const drawer = $("#cart");
+  const cartBtn = $("#cartBtn");
+  let lastFocus = null;
+  function openCart() {
+    lastFocus = document.activeElement;
+    drawer.hidden = false;
+    requestAnimationFrame(() => drawer.classList.add("open"));
+    document.body.classList.add("locked");
+    $(".drawer__close", drawer).focus({ preventScroll: true });
+  }
+  function closeCart() {
+    drawer.classList.remove("open");
+    document.body.classList.remove("locked");
+    setTimeout(() => { if (!drawer.classList.contains("open")) drawer.hidden = true; }, 350);
+    if (lastFocus) lastFocus.focus({ preventScroll: true });
+  }
+  function renderCart() {
+    // Re-rendering replaces the buttons, so remember which one had focus.
+    const had = drawer.contains(document.activeElement) ? document.activeElement : null;
+    const refocus = had && had.dataset.qty ? `[data-qty="${had.dataset.qty}"][data-id="${had.dataset.id}"][data-size="${had.dataset.size}"]` : null;
+    const lines = cart.lines();
+    const t = cart.totals(lines);
+    const badge = $(".count", cartBtn);
+    badge.textContent = t.count;
+    badge.hidden = !t.count;
+    badge.classList.remove("bump"); void badge.offsetWidth; badge.classList.add("bump");
+    cartBtn.setAttribute("aria-label", t.count ? `Open cart, ${t.count} item${t.count > 1 ? "s" : ""}` : "Open cart");
+    $("#cartTitle").textContent = t.count ? `Your cart (${t.count})` : "Your cart";
+    $("#cartBody").innerHTML = lines.length ? `<ul class="lines">${lines.map((l) => `
+      <li class="line">
+        <img src="${l.product.mockups[0]}" alt="" width="72" height="96">
+        <div class="line__info">
+          <p class="line__name">${esc(l.product.name)}</p>
+          <p class="line__meta mono">${esc(l.product.color)} · Size ${l.size}</p>
+          <div class="qty" role="group" aria-label="Quantity of ${esc(l.product.name)} size ${l.size}">
+            <button data-qty="-1" data-id="${l.id}" data-size="${l.size}" aria-label="One less" ${l.qty <= 1 ? "disabled" : ""}>−</button>
+            <span aria-live="polite">${l.qty}</span>
+            <button data-qty="1" data-id="${l.id}" data-size="${l.size}" aria-label="One more" ${l.qty >= window.OG_STORE.maxQty ? "disabled" : ""}>+</button>
+          </div>
+        </div>
+        <div class="line__end">
+          <p class="line__price">${inr(l.total)}</p>
+          ${l.mrpTotal > l.total ? `<s class="line__was">${inr(l.mrpTotal)}</s>` : ""}
+          <button class="line__remove" data-remove="${l.id}" data-size="${l.size}">Remove</button>
+        </div>
+      </li>`).join("")}</ul>` : `
+      <div class="empty">
+        <p class="empty__title">Your cart is empty</p>
+        <p class="muted">Pick a Doomsday tee and a size to get started.</p>
+        <button class="btn btn--solid" data-close>Shop the drop</button>
+      </div>`;
+    $("#cartFoot").hidden = !lines.length;
+    if (lines.length) {
+      $("#cartFoot").innerHTML = `
+        <dl class="sum">
+          <div><dt>Subtotal</dt><dd>${inr(t.subtotal)}</dd></div>
+          ${t.savings ? `<div class="sum__save"><dt>Dussehra savings</dt><dd>−${inr(t.savings)}</dd></div>` : ""}
+          <div><dt>Delivery</dt><dd>${t.shipping ? inr(t.shipping) : "Free"}</dd></div>
+          <div class="sum__total"><dt>Total</dt><dd>${inr(t.total)}</dd></div>
+        </dl>
+        <a class="btn btn--solid btn--block btn--checkout" href="checkout.html">Checkout · ${inr(t.total)}</a>
+        <p class="drawer__note mono">Delivering across South India only</p>`;
+    }
+    if (had && !drawer.contains(document.activeElement)) {
+      const next = (refocus && $(refocus, drawer)) || $(".drawer__close", drawer);
+      (next.disabled ? $(".drawer__close", drawer) : next).focus({ preventScroll: true });
+    }
+  }
+  cartBtn.addEventListener("click", openCart);
+  drawer.addEventListener("click", (e) => {
+    if (e.target.closest("[data-close]") || e.target === drawer) return closeCart();
+    const q = e.target.closest("[data-qty]");
+    if (q) {
+      const line = cart.items().find((l) => l.id === q.dataset.id && l.size === q.dataset.size);
+      if (line) cart.setQty(line.id, line.size, line.qty + +q.dataset.qty);
+    }
+    const rm = e.target.closest("[data-remove]");
+    if (rm) cart.remove(rm.dataset.remove, rm.dataset.size);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (drawer.hidden || !drawer.classList.contains("open")) return;
+    if (e.key === "Escape") return closeCart();
+    if (e.key !== "Tab") return;
+    const f = $$("button:not([disabled]), a[href]", drawer).filter((x) => x.offsetParent);
+    if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  });
+  document.addEventListener("og:cart", renderCart);
+  renderCart();
+  $(".count", cartBtn).classList.remove("bump");
+  if (location.hash === "#cart") { history.replaceState(null, "", location.pathname); openCart(); }
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && links.classList.contains("open")) setMenu(false);

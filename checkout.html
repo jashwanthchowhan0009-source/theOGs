@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Checkout · theOG's</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0B5E27">
+  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="co-page">
+  <header class="nav scrolled">
+    <div class="nav__inner">
+      <a href="index.html" class="logo" aria-label="theOG's home">
+        <img src="assets/logo-green.png" alt="" width="44" height="44">
+        <span class="logo__word">the<b>OG</b>'s</span>
+      </a>
+      <p class="co-secure mono">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        Checkout
+      </p>
+      <a class="link co-back" href="index.html#cart">Back to shop</a>
+    </div>
+  </header>
+
+  <main class="checkout" id="checkout">
+    <div class="co__main">
+      <ol class="steps mono" aria-label="Checkout steps">
+        <li data-step="details" aria-current="step"><span>1</span>Details</li>
+        <li data-step="review"><span>2</span>Review</li>
+        <li data-step="pay"><span>3</span>Payment</li>
+      </ol>
+
+      <!-- Step 1: contact and delivery address -->
+      <form class="co__step" id="stepDetails" novalidate>
+        <fieldset class="co__box">
+          <legend>Contact</legend>
+          <div class="grid2">
+            <div class="field span2">
+              <label for="fName">Full name</label>
+              <input id="fName" name="name" autocomplete="name" required maxlength="60">
+              <small class="err"></small>
+            </div>
+            <div class="field">
+              <label for="fMobile">Mobile number</label>
+              <div class="prefix"><span>+91</span><input id="fMobile" name="mobile" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="98765 43210" required maxlength="16"></div>
+              <small class="err"></small>
+              <small class="hintline">We'll confirm your order on WhatsApp at this number.</small>
+            </div>
+            <div class="field">
+              <label for="fEmail">Email <span class="opt">optional</span></label>
+              <input id="fEmail" name="email" type="email" autocomplete="email" maxlength="80">
+              <small class="err"></small>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="co__box">
+          <legend>Delivery address</legend>
+          <p class="co__zone mono">We deliver to Andhra Pradesh, Telangana, Karnataka, Tamil Nadu, Kerala and Puducherry.</p>
+          <div class="grid2">
+            <div class="field">
+              <label for="fPin">Pincode</label>
+              <input id="fPin" name="pincode" inputmode="numeric" autocomplete="postal-code" required maxlength="6" placeholder="6 digits">
+              <small class="err"></small>
+            </div>
+            <div class="field">
+              <label for="fState">State</label>
+              <select id="fState" name="state" autocomplete="address-level1" required>
+                <option value="">Choose your state</option>
+              </select>
+              <small class="err"></small>
+            </div>
+            <div class="field span2">
+              <label for="fHouse">Flat, house no., building</label>
+              <input id="fHouse" name="house" autocomplete="address-line1" required maxlength="100">
+              <small class="err"></small>
+            </div>
+            <div class="field span2">
+              <label for="fArea">Area, street, locality</label>
+              <input id="fArea" name="area" autocomplete="address-line2" required maxlength="100">
+              <small class="err"></small>
+            </div>
+            <div class="field">
+              <label for="fLandmark">Landmark <span class="opt">optional</span></label>
+              <input id="fLandmark" name="landmark" maxlength="80" placeholder="Near…">
+              <small class="err"></small>
+            </div>
+            <div class="field">
+              <label for="fCity">Town or city</label>
+              <input id="fCity" name="city" autocomplete="address-level2" required maxlength="50">
+              <small class="err"></small>
+            </div>
+          </div>
+          <div class="choice-row" role="radiogroup" aria-label="Address type">
+            <label class="chip"><input type="radio" name="type" value="Home" checked><span>Home</span></label>
+            <label class="chip"><input type="radio" name="type" value="Work"><span>Work</span></label>
+          </div>
+          <label class="check"><input type="checkbox" id="fRemember" checked> Save these details on this device for next time</label>
+        </fieldset>
+
+        <button class="btn btn--solid btn--block co__next" type="submit">Continue to review</button>
+      </form>
+
+      <!-- Step 2: review -->
+      <section class="co__step" id="stepReview" hidden aria-labelledby="reviewTitle">
+        <div class="co__box">
+          <div class="co__boxhead"><h2 id="reviewTitle" class="co__h">Deliver to</h2><button class="link" data-goto="details">Edit</button></div>
+          <div id="reviewAddress" class="addr"></div>
+        </div>
+        <div class="co__box">
+          <div class="co__boxhead"><h2 class="co__h">Items</h2><a class="link" href="index.html#cart">Edit cart</a></div>
+          <ul class="lines lines--review" id="reviewItems"></ul>
+          <p class="co__eta mono">Ships in 3 to 5 working days. We'll share tracking on WhatsApp.</p>
+        </div>
+        <button class="btn btn--solid btn--block co__next" data-goto="pay">Continue to payment</button>
+      </section>
+
+      <!-- Step 3: payment and confirm -->
+      <section class="co__step" id="stepPay" hidden aria-labelledby="payTitle">
+        <div class="co__box">
+          <h2 id="payTitle" class="co__h">Payment</h2>
+          <div class="paybox" id="payBox"></div>
+        </div>
+        <p class="err co__payerr" id="payErr" role="alert"></p>
+        <button class="btn btn--solid btn--block co__next co__confirm" id="confirmBtn"></button>
+        <p class="co__fine">By placing this order you agree to pay the total shown. Questions? <a data-wa="Hi theOG's! I have a question about my order." href="https://wa.me/918897004533" target="_blank" rel="noopener">Ask us on WhatsApp</a>.</p>
+      </section>
+
+      <!-- Done -->
+      <section class="co__step co__done" id="stepDone" hidden aria-labelledby="doneTitle" tabindex="-1"></section>
+
+      <!-- Empty cart -->
+      <section class="co__step co__empty" id="stepEmpty" hidden>
+        <p class="empty__title">Your cart is empty</p>
+        <p class="muted">Add a Doomsday tee to your cart to check out.</p>
+        <a class="btn btn--solid" href="index.html#drop">Shop the drop</a>
+      </section>
+    </div>
+
+    <aside class="co__summary" id="summary" aria-label="Order summary">
+      <button class="co__sumtoggle" id="sumToggle" aria-expanded="false" aria-controls="sumBody">
+        <span>Order summary</span><b id="sumTotalMini"></b>
+      </button>
+      <div class="co__sumbody" id="sumBody">
+        <ul class="lines lines--mini" id="sumItems"></ul>
+        <dl class="sum" id="sumTotals"></dl>
+      </div>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/checkout.js"></script>
+</body>
+</html>

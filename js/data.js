@@ -51,3 +51,28 @@ window.OG_CONTACT = {
   email: "theogs1807@gmail.com",
   instagram: "theogs_fashion"
 };
+
+/* Shop settings for the cart and checkout.
+   We deliver to South India only. A pincode must start with one of a state's
+   prefixes, so a Mumbai or Delhi pincode is caught before the order goes through. */
+window.OG_STORE = {
+  shipping: 0,          // delivery charge in rupees; 0 shows "Free"
+  maxQty: 5,            // most of one tee and size per order
+  regions: [
+    { name: "Andhra Pradesh", pins: ["51", "52", "53"] },
+    { name: "Telangana", pins: ["50"] },
+    { name: "Karnataka", pins: ["56", "57", "58", "59"] },
+    { name: "Tamil Nadu", pins: ["60", "61", "62", "63", "64"] },
+    { name: "Kerala", pins: ["67", "68", "69"] },
+    { name: "Puducherry", pins: ["605", "607", "609", "533", "673"] }
+  ]
+};
+
+/* Online payment. Leave `enabled` false until the gateway is set up.
+   For Razorpay: put the Key ID (starts with rzp_live_ or rzp_test_) in keyId
+   and set enabled to true. Never put the Key Secret here: this file is public. */
+window.OG_PAYMENT = {
+  enabled: false,
+  provider: "razorpay",
+  keyId: ""
+};

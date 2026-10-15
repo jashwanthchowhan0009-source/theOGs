@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { store, inr, esc, waLink, cart, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline } = window.OG;
+  const { store, inr, esc, waLink, cart, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline, track } = window.OG;
   const SHOP = window.OG_STORE;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -25,7 +25,7 @@
   function renderSummary(lines = cart.lines()) {
     const t = cart.totals(lines);
     $("#sumItems").innerHTML = lines.map((l) => `
-      <li class="line">
+      <li class="cline">
         <span class="line__thumb"><img src="${l.product.mockups[0]}" alt="" width="56" height="75"><b>${l.qty}</b></span>
         <div class="line__info">
           <p class="line__name">${esc(l.product.name)}</p>
@@ -133,6 +133,7 @@
     };
     if ($("#fRemember").checked) store.set("customer", { ...details.customer, ...details.address });
     else store.del("customer");
+    track("add_shipping_info", { lines: cart.items(), shipping_tier: details.address.state });
     go("review");
   });
 
@@ -145,7 +146,7 @@
       <p>${esc(a.city)}, ${esc(a.state)} ${esc(a.pincode)}</p>
       <p class="mono">+91 ${c.mobile.slice(0, 5)} ${c.mobile.slice(5)}${c.email ? ` · ${esc(c.email)}` : ""}</p>`;
     $("#reviewItems").innerHTML = cart.lines().map((l) => `
-      <li class="line">
+      <li class="cline">
         <img src="${l.product.mockups[0]}" alt="" width="64" height="85">
         <div class="line__info">
           <p class="line__name">${esc(l.product.name)}</p>
@@ -231,6 +232,10 @@
     orders.unshift(order);
     store.set("orders", orders.slice(0, 10));
     store.set("lastOrder", order);
+    track("purchase", {
+      transaction_id: order.id, value: order.totals.total, shipping: order.totals.shipping,
+      payment_type: payOnline ? "online" : "whatsapp_upi", lines: lines.map((l) => ({ id: l.id, size: l.size, qty: l.qty }))
+    });
     go("done");
     cart.clear();
   });
@@ -252,7 +257,7 @@
         ${paid ? "Message us on WhatsApp" : "Send order on WhatsApp"}
       </a>
       <div class="co__box done__box">
-        <ul class="lines lines--mini">${o.lines.map((l) => `<li class="line"><div class="line__info"><p class="line__name">${esc(l.name)} × ${l.qty}</p><p class="line__meta mono">${esc(l.color)} · Size ${l.size}</p></div><p class="line__price">${inr(l.total)}</p></li>`).join("")}</ul>
+        <ul class="lines lines--mini">${o.lines.map((l) => `<li class="cline"><div class="line__info"><p class="line__name">${esc(l.name)} × ${l.qty}</p><p class="line__meta mono">${esc(l.color)} · Size ${l.size}</p></div><p class="line__price">${inr(l.total)}</p></li>`).join("")}</ul>
         <dl class="sum"><div class="sum__total"><dt>Total</dt><dd>${inr(o.totals.total)}</dd></div></dl>
         <p class="done__addr"><b>Delivering to</b><br>${esc(o.customer.name)}, ${esc(o.address.house)}, ${esc(o.address.area)}, ${esc(o.address.city)}, ${esc(o.address.state)} ${esc(o.address.pincode)}</p>
       </div>
@@ -282,7 +287,8 @@
     renderSummary(lines);
     if ((want === "review" || want === "pay") && !details) { history.replaceState(null, "", "#details"); return show("details"); }
     if (want === "review") renderReview();
-    if (want === "pay") renderPay();
+    if (want === "pay") { renderPay(); track("add_payment_info", { lines: cart.items() }); }
+    if (want === "details" && !route.began) { route.began = true; track("begin_checkout", { lines: cart.items() }); }
     show(["details", "review", "pay"].includes(want) ? want : "details");
     const first = steps[want] && $("h2, input", steps[want]);
     if (want !== "details" && first) { first.setAttribute("tabindex", "-1"); first.focus({ preventScroll: true }); }

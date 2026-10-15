@@ -47,6 +47,24 @@ The site has no server, so an order reaches you on WhatsApp. When a customer pla
 
 **Switching on online payment (Razorpay).** In `OG_PAYMENT` in `js/data.js`, set `keyId` to your Razorpay **Key ID** and `enabled: true`. The payment step then shows "Pay online" and opens Razorpay Checkout (UPI, cards, net banking). The order goes through only after the payment succeeds, and the payment ID is added to the WhatsApp message and to Razorpay's payment notes. Never put the Key Secret in this repo. To verify payments on a server (recommended once volume grows), add a small backend that creates Razorpay orders and checks the payment signature.
 
+## Visitor and sales tracking
+
+The site sends visits and shop events to **Google Analytics 4** once a Measurement ID is set. To switch it on:
+1. Go to analytics.google.com and create a property for theOG's.
+2. Add a **Web** data stream for the site's address.
+3. Copy the Measurement ID, which looks like `G-XXXXXXXXXX`.
+4. Paste it into `OG_ANALYTICS.ga4` in `js/data.js`.
+
+These events are tracked:
+- add_to_cart, view_cart and remove_from_cart
+- begin_checkout
+- add_shipping_info, sent with the state only
+- add_payment_info
+- purchase, sent with the order ID, value and items
+- whatsapp_click
+
+Names, phone numbers and addresses are never sent. Purchases show up under Reports → Monetization.
+
 **Background photo.** The sign-up band uses `assets/gallery/og-flags.jpg`; swap the file to change it.
 
 **Brand colours and fonts.** Change the tokens at the top of `css/styles.css` (`--accent`, `--bg`, `--f-display` and so on).

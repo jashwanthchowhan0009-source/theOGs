@@ -136,5 +136,38 @@
     });
   }
 
-  window.OG = { store, inr, esc, waLink, product, cart, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline: !!(PAY.enabled && PAY.keyId) };
+  /* ---------- Analytics (Google Analytics 4, off until an ID is set) ---------- */
+  const GA = (window.OG_ANALYTICS || {}).ga4 || "";
+  if (/^G-[A-Z0-9]+$/.test(GA)) {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag("js", new Date());
+    window.gtag("config", GA);
+    const s = document.createElement("script");
+    s.async = true;
+    s.src = `https://www.googletagmanager.com/gtag/js?id=${GA}`;
+    document.head.appendChild(s);
+  }
+  const gaItem = (id, size, qty) => {
+    const p = product(id);
+    return { item_id: `${id}-${size}`, item_name: p.name, item_variant: `${p.color} / ${size}`, item_category: "T-shirt", price: p.price, quantity: qty };
+  };
+  // track("add_to_cart", { lines: [{ id, size, qty }] }) and so on; never pass personal details.
+  function track(event, data = {}) {
+    if (typeof window.gtag !== "function") return;
+    const params = { currency: "INR", ...data };
+    if (data.lines) {
+      params.items = data.lines.map((l) => gaItem(l.id, l.size, l.qty));
+      if (params.value == null) params.value = params.items.reduce((n, i) => n + i.price * i.quantity, 0);
+      delete params.lines;
+    }
+    window.gtag("event", event, params);
+  }
+  // Any WhatsApp link tapped anywhere on the site.
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="https://wa.me/"]');
+    if (a) track("whatsapp_click", { link_text: a.textContent.trim().slice(0, 60) });
+  });
+
+  window.OG = { track, store, inr, esc, waLink, product, cart, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline: !!(PAY.enabled && PAY.keyId) };
 })();

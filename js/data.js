@@ -76,3 +76,12 @@ window.OG_PAYMENT = {
   provider: "razorpay",
   keyId: ""
 };
+
+/* Visitor and sales tracking with Google Analytics 4 (free).
+   Paste the Measurement ID (looks like G-XXXXXXXXXX) to switch it on.
+   Tracked: visits, add to cart, checkout started, address filled, payment step,
+   orders placed (with order ID and value) and WhatsApp taps. No names, phone
+   numbers or addresses are sent. */
+window.OG_ANALYTICS = {
+  ga4: ""
+};

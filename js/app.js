@@ -8,7 +8,8 @@
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const root = document.documentElement;
 
-  const { store, inr, esc, waLink, cart } = window.OG;
+  const OG = window.OG;
+  const { store, inr, esc, waLink, cart } = OG;
   function wireWhatsApp(scope) {
     $$("[data-wa]", scope).forEach((a) => { a.href = waLink(a.dataset.wa); });
   }
@@ -64,6 +65,7 @@
   function setMenu(open) {
     if (open) links.style.top = nav.getBoundingClientRect().bottom + "px";
     links.classList.toggle("open", open);
+    nav.classList.toggle("menu-open", open);
     burger.setAttribute("aria-expanded", String(open));
     burger.setAttribute("aria-label", open ? "Close menu" : "Open menu");
     document.body.classList.toggle("locked", open);
@@ -207,12 +209,16 @@
     $("[data-add]", card).addEventListener("click", () => {
       if (needSize()) return;
       const { capped } = cart.add(r.id, chosen[r.id]);
+      OG.track("add_to_cart", { lines: [{ id: r.id, size: chosen[r.id], qty: 1 }] });
       if (capped) toast(`You can order up to ${window.OG_STORE.maxQty} of one size.`);
       openCart();
     });
     $("[data-buynow]", card).addEventListener("click", () => {
       if (needSize()) return;
-      if (!cart.items().some((l) => l.id === r.id && l.size === chosen[r.id])) cart.add(r.id, chosen[r.id]);
+      if (!cart.items().some((l) => l.id === r.id && l.size === chosen[r.id])) {
+        cart.add(r.id, chosen[r.id]);
+        OG.track("add_to_cart", { lines: [{ id: r.id, size: chosen[r.id], qty: 1 }] });
+      }
       location.href = "checkout.html";
     });
     wa.addEventListener("click", (e) => { if (needSize()) e.preventDefault(); });
@@ -223,6 +229,7 @@
   const cartBtn = $("#cartBtn");
   let lastFocus = null;
   function openCart() {
+    OG.track("view_cart", { lines: cart.items() });
     lastFocus = document.activeElement;
     drawer.hidden = false;
     requestAnimationFrame(() => drawer.classList.add("open"));
@@ -248,7 +255,7 @@
     cartBtn.setAttribute("aria-label", t.count ? `Open cart, ${t.count} item${t.count > 1 ? "s" : ""}` : "Open cart");
     $("#cartTitle").textContent = t.count ? `Your cart (${t.count})` : "Your cart";
     $("#cartBody").innerHTML = lines.length ? `<ul class="lines">${lines.map((l) => `
-      <li class="line">
+      <li class="cline">
         <img src="${l.product.mockups[0]}" alt="" width="72" height="96">
         <div class="line__info">
           <p class="line__name">${esc(l.product.name)}</p>
@@ -296,7 +303,11 @@
       if (line) cart.setQty(line.id, line.size, line.qty + +q.dataset.qty);
     }
     const rm = e.target.closest("[data-remove]");
-    if (rm) cart.remove(rm.dataset.remove, rm.dataset.size);
+    if (rm) {
+      const line = cart.items().find((l) => l.id === rm.dataset.remove && l.size === rm.dataset.size);
+      if (line) OG.track("remove_from_cart", { lines: [line] });
+      cart.remove(rm.dataset.remove, rm.dataset.size);
+    }
   });
   document.addEventListener("keydown", (e) => {
     if (drawer.hidden || !drawer.classList.contains("open")) return;
@@ -308,6 +319,35 @@
     else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
   });
   document.addEventListener("og:cart", renderCart);
+  document.addEventListener("og:cart", renderBar);
+
+  /* ---------- Phone bottom bar ----------
+     After the hero, a bar offers the drop (or the cart once it has something in it).
+     It hides while the tee cards are on screen, since they have their own buttons. */
+  const mbar = $("#mbar");
+  const mbarBtn = $("#mbarBtn");
+  const seen = { hero: true, drop: false, footer: false };
+  function renderBar() {
+    const t = cart.totals();
+    mbarBtn.textContent = t.count ? `View cart (${t.count}) · ${inr(t.total)}` : `Shop the drop · from ${inr(Math.min(...RELEASES.map((r) => r.price)))}`;
+    const show = !seen.hero && !seen.drop && !seen.footer;
+    mbar.classList.toggle("show", show);
+    mbarBtn.tabIndex = show ? 0 : -1;
+  }
+  mbarBtn.addEventListener("click", () => {
+    if (cart.count()) openCart();
+    else document.getElementById("drop").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+  });
+  if ("IntersectionObserver" in window) {
+    const watch = new IntersectionObserver((entries) => {
+      entries.forEach((en) => { seen[en.target.dataset.bar] = en.isIntersecting; });
+      renderBar();
+    }, { rootMargin: "-20% 0px -20% 0px" });
+    [[".hero", "hero"], ["#releases", "drop"], [".footer", "footer"]].forEach(([sel, key]) => {
+      const el = $(sel); el.dataset.bar = key; watch.observe(el);
+    });
+  }
+  renderBar();
   renderCart();
   $(".count", cartBtn).classList.remove("bump");
   if (location.hash === "#cart") { history.replaceState(null, "", location.pathname); openCart(); }

@@ -335,6 +335,18 @@ h2 { font: 900 clamp(36px, 6vw, 76px)/.92 var(--f-display); font-stretch: 118%; 
 .btn--buy { min-height: 54px; padding-inline: 14px; font-size: 15.5px; white-space: nowrap; }
 .buy .btn--solid { background: var(--accent); color: var(--accent-ink); }
 .buy .btn--solid:hover { background: var(--fg); color: var(--bg); }
+.release__coupon { display: flex; align-items: center; gap: 8px; margin-top: -8px; font-size: 14px; font-weight: 500; color: var(--fg); }
+.release__coupon svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.7; stroke-linejoin: round; }
+.coupon { display: grid; gap: 6px; padding-top: 4px; }
+.coupon label { font-size: 13px; font-weight: 600; }
+.coupon__row { display: flex; gap: 8px; }
+.coupon__row input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); border-radius: var(--radius); padding: 10px 12px; font-size: 16px; text-transform: uppercase; letter-spacing: .06em; }
+.coupon__row input::placeholder { text-transform: none; letter-spacing: 0; }
+.coupon__row input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.coupon .err:empty { display: none; }
+.coupon--on { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 6px; background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); font-size: 14px; }
+.coupon--on[hidden] { display: none; }
+.coupon--on b { letter-spacing: .04em; }
 .release__wa { justify-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--muted); text-underline-offset: 3px; }
 .release__wa:hover { color: var(--fg); }
 .release__wa svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }

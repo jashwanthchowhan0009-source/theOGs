@@ -131,6 +131,7 @@
           ${r.mrp ? `<s class="price__was" aria-label="Was ${inr(r.mrp)}">${inr(r.mrp)}</s>` : ""}
           ${save ? `<span class="price__off mono">${Math.round((save / r.mrp) * 100)}% off</span>` : ""}
         </div>
+        ${OG.coupon.enabled ? `<p class="release__coupon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8a2 2 0 0 0 2-2h12a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H6a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4V8Z"/><path d="M10 9.5v5" stroke-dasharray="1.5 2"/></svg>Have a coupon? Get ${inr(OG.coupon.maxOff)} more off at checkout.</p>` : ""}
         <dl class="specs mono">
           <div><dt>Colour</dt><dd>${r.color}</dd></div>
           <div><dt>Fit</dt><dd>${r.fit}</dd></div>
@@ -283,11 +284,12 @@
         <dl class="sum">
           <div><dt>Subtotal</dt><dd>${inr(t.subtotal)}</dd></div>
           ${t.savings ? `<div class="sum__save"><dt>Dussehra savings</dt><dd>−${inr(t.savings)}</dd></div>` : ""}
+          ${t.discount ? `<div class="sum__save"><dt>Coupon ${esc(t.coupon)}</dt><dd>−${inr(t.discount)}</dd></div>` : ""}
           <div><dt>Delivery</dt><dd>${t.shipping ? inr(t.shipping) : "Free"}</dd></div>
           <div class="sum__total"><dt>Total</dt><dd>${inr(t.total)}</dd></div>
         </dl>
         <a class="btn btn--solid btn--block btn--checkout" href="checkout.html">Checkout · ${inr(t.total)}</a>
-        <p class="drawer__note mono">Delivering across South India only</p>`;
+        <p class="drawer__note mono">${OG.coupon.enabled && !t.discount ? "Have a coupon? Add it at checkout · " : ""}Delivering across South India only</p>`;
     }
     if (had && !drawer.contains(document.activeElement)) {
       const next = (refocus && $(refocus, drawer)) || $(".drawer__close", drawer);

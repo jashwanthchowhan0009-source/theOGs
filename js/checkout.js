@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { store, inr, esc, waLink, cart, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline, track } = window.OG;
+  const { store, inr, esc, waLink, cart, coupon, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline, track } = window.OG;
   const SHOP = window.OG_STORE;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -36,10 +36,27 @@
     $("#sumTotals").innerHTML = `
       <div><dt>Subtotal</dt><dd>${inr(t.subtotal)}</dd></div>
       ${t.savings ? `<div class="sum__save"><dt>Dussehra savings</dt><dd>−${inr(t.savings)}</dd></div>` : ""}
+      ${t.discount ? `<div class="sum__save"><dt>Coupon ${esc(t.coupon)}</dt><dd>−${inr(t.discount)}</dd></div>` : ""}
       <div><dt>Delivery</dt><dd>${t.shipping ? inr(t.shipping) : "Free"}</dd></div>
       <div class="sum__total"><dt>Total</dt><dd>${inr(t.total)}</dd></div>`;
     $("#sumTotalMini").textContent = inr(t.total);
+    $("#couponForm").hidden = !coupon.enabled || !!t.discount;
+    $("#couponOn").hidden = !t.discount;
+    if (t.discount) $("#couponOn").innerHTML = `<span><b>${esc(t.coupon)}</b> applied · ${inr(t.discount)} off</span><button class="link" type="button" id="couponRemove">Remove</button>`;
   }
+
+  /* ---------- Coupon ---------- */
+  $("#couponForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const input = $("#fCoupon");
+    if (!input.value.trim()) { $("#couponErr").textContent = "Enter your coupon code."; return input.focus(); }
+    const c = coupon.apply(input.value);
+    if (!c) { $("#couponErr").textContent = "That code isn't valid. Check the spelling and try again."; return input.focus(); }
+    $("#couponErr").textContent = "";
+    input.value = "";
+    toast(`${c.code} applied: ${inr(c.off)} off`);
+  });
+  $("#couponOn").addEventListener("click", (e) => { if (e.target.closest("#couponRemove")) coupon.remove(); });
   $("#sumToggle").addEventListener("click", (e) => {
     const open = e.currentTarget.getAttribute("aria-expanded") !== "true";
     e.currentTarget.setAttribute("aria-expanded", String(open));
@@ -190,7 +207,8 @@
   function orderMessage(o) {
     const L = [`*New order ${o.id}*`, ""];
     o.lines.forEach((l, i) => L.push(`${i + 1}. ${l.name} (${l.color}), size ${l.size} × ${l.qty} = ${inr(l.total)}`));
-    L.push("", `Subtotal: ${inr(o.totals.subtotal)}`, `Delivery: ${o.totals.shipping ? inr(o.totals.shipping) : "Free"}`, `*Total: ${inr(o.totals.total)}*`,
+    L.push("", `Subtotal: ${inr(o.totals.subtotal)}`, ...(o.totals.discount ? [`Coupon ${o.totals.coupon}: −${inr(o.totals.discount)}`] : []),
+      `Delivery: ${o.totals.shipping ? inr(o.totals.shipping) : "Free"}`, `*Total: ${inr(o.totals.total)}*`,
       `Payment: ${o.payment.status}${o.payment.ref ? ` (${o.payment.ref})` : ""}`, "", "*Deliver to*", o.customer.name, `+91 ${o.customer.mobile}`);
     if (o.customer.email) L.push(o.customer.email);
     L.push(`${o.address.house}, ${o.address.area}`);
@@ -233,10 +251,11 @@
     store.set("orders", orders.slice(0, 10));
     store.set("lastOrder", order);
     track("purchase", {
-      transaction_id: order.id, value: order.totals.total, shipping: order.totals.shipping,
+      transaction_id: order.id, value: order.totals.total, shipping: order.totals.shipping, coupon: order.totals.coupon || undefined,
       payment_type: payOnline ? "online" : "whatsapp_upi", lines: lines.map((l) => ({ id: l.id, size: l.size, qty: l.qty }))
     });
     go("done");
+    store.del("coupon");
     cart.clear();
   });
 
@@ -258,7 +277,7 @@
       </a>
       <div class="co__box done__box">
         <ul class="lines lines--mini">${o.lines.map((l) => `<li class="cline"><div class="line__info"><p class="line__name">${esc(l.name)} × ${l.qty}</p><p class="line__meta mono">${esc(l.color)} · Size ${l.size}</p></div><p class="line__price">${inr(l.total)}</p></li>`).join("")}</ul>
-        <dl class="sum"><div class="sum__total"><dt>Total</dt><dd>${inr(o.totals.total)}</dd></div></dl>
+        <dl class="sum">${o.totals.discount ? `<div class="sum__save"><dt>Coupon ${esc(o.totals.coupon)}</dt><dd>−${inr(o.totals.discount)}</dd></div>` : ""}<div class="sum__total"><dt>Total</dt><dd>${inr(o.totals.total)}</dd></div></dl>
         <p class="done__addr"><b>Delivering to</b><br>${esc(o.customer.name)}, ${esc(o.address.house)}, ${esc(o.address.area)}, ${esc(o.address.city)}, ${esc(o.address.state)} ${esc(o.address.pincode)}</p>
       </div>
       <a class="link" href="index.html">Back to theOG's</a>`;
@@ -300,6 +319,15 @@
   }
   $$("[data-goto]").forEach((b) => b.addEventListener("click", () => go(b.dataset.goto)));
   window.addEventListener("hashchange", route);
-  document.addEventListener("og:cart", () => { if (!["done"].includes(location.hash.slice(1))) route(); });
+  // Cart or coupon changed: refresh in place, without jumping back to the top.
+  document.addEventListener("og:cart", () => {
+    const at = location.hash.slice(1) || "details";
+    if (at === "done") return;
+    const lines = cart.lines();
+    if (!lines.length) return route();
+    renderSummary(lines);
+    if (at === "review" && details) renderReview();
+    if (at === "pay" && details) renderPay();
+  });
   route();
 })();

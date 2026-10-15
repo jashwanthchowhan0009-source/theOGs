@@ -71,8 +71,31 @@
       const subtotal = lines.reduce((n, l) => n + l.total, 0);
       const mrp = lines.reduce((n, l) => n + l.mrpTotal, 0);
       const shipping = lines.length ? SHOP.shipping : 0;
-      return { count: lines.reduce((n, l) => n + l.qty, 0), subtotal, mrp, savings: mrp - subtotal, shipping, total: subtotal + shipping };
+      const c = lines.length ? coupon.get() : null;
+      const discount = c ? Math.min(c.off, subtotal) : 0;
+      return {
+        count: lines.reduce((n, l) => n + l.qty, 0), subtotal, mrp, savings: mrp - subtotal,
+        coupon: c ? c.code : "", discount, shipping, total: subtotal - discount + shipping
+      };
     }
+  };
+
+  /* ---------- Coupon: one per order, codes and amounts in OG_STORE.coupons ---------- */
+  const COUPONS = SHOP.coupons || {};
+  const findCoupon = (code) => {
+    const key = Object.keys(COUPONS).find((k) => k.toUpperCase() === String(code).trim().toUpperCase());
+    return key ? { code: key, off: COUPONS[key] } : null;
+  };
+  const coupon = {
+    enabled: Object.keys(COUPONS).length > 0,
+    maxOff: Math.max(0, ...Object.values(COUPONS)),
+    get() { const saved = store.get("coupon", null); return saved ? findCoupon(saved) : null; },
+    apply(code) {
+      const c = findCoupon(code);
+      if (c) { store.set("coupon", c.code); document.dispatchEvent(new CustomEvent("og:cart")); }
+      return c;
+    },
+    remove() { store.del("coupon"); document.dispatchEvent(new CustomEvent("og:cart")); }
   };
 
   // Keep every open tab in step.
@@ -159,6 +182,8 @@
     if (data.lines) {
       params.items = data.lines.map((l) => gaItem(l.id, l.size, l.qty));
       if (params.value == null) params.value = params.items.reduce((n, i) => n + i.price * i.quantity, 0);
+      const c = coupon.get();
+      if (c && params.coupon == null) params.coupon = c.code;
       delete params.lines;
     }
     window.gtag("event", event, params);
@@ -169,5 +194,5 @@
     if (a) track("whatsapp_click", { link_text: a.textContent.trim().slice(0, 60) });
   });
 
-  window.OG = { track, store, inr, esc, waLink, product, cart, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline: !!(PAY.enabled && PAY.keyId) };
+  window.OG = { track, coupon, store, inr, esc, waLink, product, cart, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline: !!(PAY.enabled && PAY.keyId) };
 })();

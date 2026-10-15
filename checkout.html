@@ -149,6 +149,15 @@
       </button>
       <div class="co__sumbody" id="sumBody">
         <ul class="lines lines--mini" id="sumItems"></ul>
+        <form class="coupon" id="couponForm" novalidate hidden>
+          <label for="fCoupon">Coupon code</label>
+          <div class="coupon__row">
+            <input id="fCoupon" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" placeholder="Enter code">
+            <button class="btn btn--ghost btn--sm" type="submit">Apply</button>
+          </div>
+          <small class="err" id="couponErr" role="alert"></small>
+        </form>
+        <div class="coupon coupon--on" id="couponOn" hidden></div>
         <dl class="sum" id="sumTotals"></dl>
       </div>
     </aside>

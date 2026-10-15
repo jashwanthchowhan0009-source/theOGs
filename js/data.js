@@ -14,7 +14,7 @@ window.OG_RELEASES = [
     print: "Screen print",
     sizes: ["M", "L", "XL"],
     mrp: 999,
-    price: 699,
+    price: 799,
     offer: "Dussehra offer",
     mockups: [
       "assets/drop/doomsday-1.jpg",
@@ -35,7 +35,7 @@ window.OG_RELEASES = [
     print: "DTF print",
     sizes: ["M", "L", "XL"],
     mrp: 999,
-    price: 669,
+    price: 769,
     offer: "Dussehra offer",
     mockups: [
       "assets/drop/rdj-doom-1.jpg",
@@ -58,6 +58,9 @@ window.OG_CONTACT = {
 window.OG_STORE = {
   shipping: 0,          // delivery charge in rupees; 0 shows "Free"
   maxQty: 5,            // most of one tee and size per order
+  // Coupon codes and the rupees each takes off the whole order. Codes are not case-sensitive.
+  // Add, change or delete codes here; an empty list hides the coupon line and box.
+  coupons: { "OG100": 100 },
   regions: [
     { name: "Andhra Pradesh", pins: ["51", "52", "53"] },
     { name: "Telangana", pins: ["50"] },

@@ -131,7 +131,10 @@
           ${r.mrp ? `<s class="price__was" aria-label="Was ${inr(r.mrp)}">${inr(r.mrp)}</s>` : ""}
           ${save ? `<span class="price__off mono">${Math.round((save / r.mrp) * 100)}% off</span>` : ""}
         </div>
-        ${OG.coupon.enabled ? `<p class="release__coupon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8a2 2 0 0 0 2-2h12a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H6a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4V8Z"/><path d="M10 9.5v5" stroke-dasharray="1.5 2"/></svg>Have a coupon? Get ${inr(OG.coupon.maxOff)} more off at checkout.</p>` : ""}
+        ${OG.coupon.enabled ? `<button type="button" class="coupon-tag" data-coupon-info>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h15A1.5 1.5 0 0 1 21 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 16.5V14a2 2 0 0 0 0-4V7.5Z"/><path d="M9.5 9.5h.01M14.5 14.5h.01M15 9l-6 6"/></svg>
+          <span>Apply coupon for <b>${inr(OG.coupon.maxOff)} OFF</b></span><small>at checkout</small>
+        </button>` : ""}
         <dl class="specs mono">
           <div><dt>Colour</dt><dd>${r.color}</dd></div>
           <div><dt>Fit</dt><dd>${r.fit}</dd></div>
@@ -223,6 +226,8 @@
       location.href = "checkout.html";
     });
     wa.addEventListener("click", (e) => { if (needSize()) e.preventDefault(); });
+    const tag = $("[data-coupon-info]", card);
+    if (tag) tag.addEventListener("click", () => toast(`Got a coupon code? Enter it at checkout to get ${inr(OG.coupon.maxOff)} off your order.`));
   });
 
   /* ---------- Cart drawer ---------- */

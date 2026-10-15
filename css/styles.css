@@ -335,8 +335,18 @@ h2 { font: 900 clamp(36px, 6vw, 76px)/.92 var(--f-display); font-stretch: 118%; 
 .btn--buy { min-height: 54px; padding-inline: 14px; font-size: 15.5px; white-space: nowrap; }
 .buy .btn--solid { background: var(--accent); color: var(--accent-ink); }
 .buy .btn--solid:hover { background: var(--fg); color: var(--bg); }
-.release__coupon { display: flex; align-items: center; gap: 8px; margin-top: -8px; font-size: 14px; font-weight: 500; color: var(--fg); }
-.release__coupon svg { width: 20px; height: 20px; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.7; stroke-linejoin: round; }
+.coupon-tag {
+  display: flex; align-items: center; gap: 10px; width: 100%; margin-top: -6px; padding: 12px 14px; text-align: left;
+  border: 1.5px dashed var(--accent); border-radius: 8px; background: color-mix(in srgb, var(--accent) 9%, transparent);
+  color: var(--fg); font-size: 15px; transition: background-color .2s, transform .2s var(--ease);
+}
+.coupon-tag:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.coupon-tag:active { transform: scale(.98); }
+.coupon-tag svg { width: 24px; height: 24px; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.coupon-tag span { flex: 1; }
+.coupon-tag b { color: var(--accent); font-weight: 800; white-space: nowrap; }
+@media (max-width: 440px) { .coupon-tag small { display: none; } .coupon-tag { font-size: 16px; } }
+.coupon-tag small { font: 500 11px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
 .coupon { display: grid; gap: 6px; padding-top: 4px; }
 .coupon label { font-size: 13px; font-weight: 600; }
 .coupon__row { display: flex; gap: 8px; }

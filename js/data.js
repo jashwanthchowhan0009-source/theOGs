@@ -33,6 +33,10 @@ window.OG_RELEASES = [
     fit: "Oversized",
     fabric: "240 GSM cotton",
     print: "DTF print",
+    // Sold out: the card stays up with its photos, but it can't be bought or added to a cart.
+    // Delete these two lines when it's back in stock.
+    soldOut: true,
+    soldOutNote: "Stay tuned, coming next month",
     sizes: ["M", "L", "XL"],
     mrp: 999,
     price: 769,

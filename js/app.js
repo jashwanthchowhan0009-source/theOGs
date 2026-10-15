@@ -108,9 +108,10 @@
 
   $("#releases").innerHTML = RELEASES.map((r) => {
     const save = r.mrp && r.mrp > r.price ? r.mrp - r.price : 0;
-    return `<article class="release" id="${r.id}" aria-labelledby="${r.id}-name">
+    const out = !!r.soldOut;
+    return `<article class="release${out ? " is-soldout" : ""}" id="${r.id}" aria-labelledby="${r.id}-name">
       <div class="release__stage" data-gallery="${r.id}">
-        ${r.offer ? `<span class="release__badge mono">${r.offer}${save ? ` · Save ${inr(save)}` : ""}</span>` : ""}
+        ${out ? `<span class="release__badge release__badge--out mono">Sold out</span>` : r.offer ? `<span class="release__badge mono">${r.offer}${save ? ` · Save ${inr(save)}` : ""}</span>` : ""}
         <div class="release__slides">
           ${r.mockups.map((src, i) => `<img src="${src}" alt="${r.name} tee, view ${i + 1} of ${r.mockups.length}" ${i ? 'loading="lazy"' : ""} class="${i ? "" : "is-on"}">`).join("")}
         </div>
@@ -131,7 +132,15 @@
           ${r.mrp ? `<s class="price__was" aria-label="Was ${inr(r.mrp)}">${inr(r.mrp)}</s>` : ""}
           ${save ? `<span class="price__off mono">${Math.round((save / r.mrp) * 100)}% off</span>` : ""}
         </div>
-        ${OG.coupon.enabled ? `<button type="button" class="coupon-tag" data-coupon-info>
+        ${out ? `<div class="soldout" role="status">
+          <p class="soldout__title">Sold out</p>
+          <p class="soldout__note">${r.soldOutNote || "Back soon"}</p>
+          <a class="btn btn--ghost btn--block" data-wa="Hi theOG's! Please tell me when the ${r.name} tee is back." href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-4A8 8 0 1 1 8 18.7L4 20Z"/></svg>
+            Notify me on WhatsApp
+          </a>
+        </div>` : ""}
+        ${OG.coupon.enabled && !out ? `<button type="button" class="coupon-tag" data-coupon-info>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h15A1.5 1.5 0 0 1 21 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 16.5V14a2 2 0 0 0 0-4V7.5Z"/><path d="M9.5 9.5h.01M14.5 14.5h.01M15 9l-6 6"/></svg>
           <span>Apply coupon for <b>${inr(OG.coupon.maxOff)} OFF</b></span><small>at checkout</small>
         </button>` : ""}
@@ -141,7 +150,7 @@
           <div><dt>Fabric</dt><dd>${r.fabric}</dd></div>
           <div><dt>Print</dt><dd>${r.print}</dd></div>
         </dl>
-        <div class="sizepick">
+        ${out ? "" : `<div class="sizepick">
           <p class="sizepick__label">Size: <b data-size-label>pick one</b></p>
           <div class="sizes" role="radiogroup" aria-label="Size for ${r.name}">
             ${r.sizes.map((sz) => `<button class="size" role="radio" aria-checked="false" data-size="${sz}">${sz}</button>`).join("")}
@@ -158,7 +167,7 @@
         <a class="release__wa" data-order="${r.id}" href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-4A8 8 0 1 1 8 18.7L4 20Z"/></svg>
           Or order on WhatsApp
-        </a>
+        </a>`}
       </div>
     </article>`;
   }).join("");
@@ -190,7 +199,7 @@
   });
 
   // Size picker, add to cart, buy now, and the WhatsApp order message.
-  $$(".release").forEach((card) => {
+  $$(".release:not(.is-soldout)").forEach((card) => {
     const r = RELEASES.find((x) => x.id === card.id);
     const wa = $(".release__wa", card);
     const hint = $(".sizepick__hint", card);
@@ -336,7 +345,7 @@
   const seen = { hero: true, drop: false, footer: false };
   function renderBar() {
     const t = cart.totals();
-    mbarBtn.textContent = t.count ? `View cart (${t.count}) · ${inr(t.total)}` : `Shop the drop · from ${inr(Math.min(...RELEASES.map((r) => r.price)))}`;
+    mbarBtn.textContent = t.count ? `View cart (${t.count}) · ${inr(t.total)}` : `Shop the drop · from ${inr(Math.min(...RELEASES.filter((r) => !r.soldOut).map((r) => r.price)))}`;
     const show = !seen.hero && !seen.drop && !seen.footer;
     mbar.classList.toggle("show", show);
     mbarBtn.tabIndex = show ? 0 : -1;

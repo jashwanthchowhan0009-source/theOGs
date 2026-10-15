@@ -335,6 +335,13 @@ h2 { font: 900 clamp(36px, 6vw, 76px)/.92 var(--f-display); font-stretch: 118%; 
 .btn--buy { min-height: 54px; padding-inline: 14px; font-size: 15.5px; white-space: nowrap; }
 .buy .btn--solid { background: var(--accent); color: var(--accent-ink); }
 .buy .btn--solid:hover { background: var(--fg); color: var(--bg); }
+.release__badge--out { background: var(--fg); color: var(--bg); box-shadow: none; }
+.is-soldout .release__slides img { filter: grayscale(.55) brightness(.92); }
+.is-soldout .price__now { color: var(--muted); }
+.soldout { display: grid; gap: 6px; padding: 18px; border-radius: 8px; border: 1.5px solid var(--fg); text-align: center; }
+.soldout__title { font: 900 26px/1 var(--f-display); font-stretch: 118%; text-transform: uppercase; letter-spacing: -.01em; }
+.soldout__note { font-size: 16px; font-weight: 600; color: var(--accent); }
+.soldout .btn { margin-top: 10px; }
 .coupon-tag {
   display: flex; align-items: center; gap: 10px; width: 100%; margin-top: -6px; padding: 12px 14px; text-align: left;
   border: 1.5px dashed var(--accent); border-radius: 8px; background: color-mix(in srgb, var(--accent) 9%, transparent);

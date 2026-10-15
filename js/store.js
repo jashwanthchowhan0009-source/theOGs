@@ -29,7 +29,7 @@
     const raw = memory || store.get("cart", []);
     return (Array.isArray(raw) ? raw : []).filter((l) => {
       const p = product(l.id);
-      return p && p.sizes.includes(l.size) && l.qty > 0;
+      return p && !p.soldOut && p.sizes.includes(l.size) && l.qty > 0;
     }).map((l) => ({ id: l.id, size: l.size, qty: Math.min(SHOP.maxQty, Math.floor(l.qty)) }));
   }
   function write(items) {

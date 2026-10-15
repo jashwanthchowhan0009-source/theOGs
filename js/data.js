@@ -64,9 +64,7 @@ window.OG_STORE = {
   maxQty: 5,            // most of one tee and size per order
   // Coupon codes and the rupees each takes off the whole order. Codes are not case-sensitive.
   // Add, change or delete codes here; an empty list hides the coupon line and box.
-  coupons: { "OG09010": 100, "OG100": 100 },
-  // The code printed on the tee cards; tapping it applies the coupon. "" shows no code.
-  showCoupon: "OG09010",
+  coupons: {},
   regions: [
     { name: "Andhra Pradesh", pins: ["51", "52", "53"] },
     { name: "Telangana", pins: ["50"] },

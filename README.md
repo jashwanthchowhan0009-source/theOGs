@@ -29,6 +29,7 @@ css/styles.css      all styles; colour and font tokens at the top
 js/data.js          the drop's tees and prices, contact details
 checkout.html       checkout page
 js/data.js          also: OG_STORE (delivery states, pincodes, shipping) and OG_PAYMENT
+js/vendor/qrcode.js QR code drawing for the UPI payment step
 js/store.js         cart, price helpers, mobile and pincode checks, payment hook
 js/app.js           drop panels, slideshows, cart drawer, scroll effects
 js/checkout.js      checkout steps, validation, order message
@@ -46,6 +47,10 @@ The site has no server, so an order reaches you on WhatsApp. When a customer pla
 **Coupons.** `OG_STORE.coupons` maps each code to the rupees it takes off the whole order (`{ "OG100": 100 }`). Codes aren't case-sensitive, and each order can use one. The product cards say "Have a coupon? Get ₹100 more off at checkout" without showing the code, and the checkout summary has the box to enter it. The coupon line is included in the WhatsApp order message. Set `coupons: {}` to hide all of it.
 
 **Delivery area.** `OG_STORE.regions` lists the states and the pincode prefixes that belong to them. Checkout rejects any pincode outside these and auto-fills the state. Change `OG_STORE.shipping` to charge for delivery (0 shows "Free").
+
+**Pay by UPI QR (on now).** `OG_PAYMENT.upi.id` in `js/data.js` holds the UPI ID. The payment step draws a QR (and, on phones, a "Pay with UPI app" button) for the exact total, with the order ID in the payment note. The customer pays, types the 12-digit UTR, and places the order; the WhatsApp message and the email copy say "UPI paid, please verify (UTR …)". Check that UTR in your UPI app before shipping. Clear `id` to hide the option. The QR is drawn by `js/vendor/qrcode.js` (MIT, Kazuhiko Arase).
+
+**Email copy of orders.** Every order is also sent to `OG_ORDER_EMAIL` through FormSubmit (formsubmit.co). The very first order triggers an "Activate form" email from FormSubmit to that address: click it once, and orders after that arrive in the inbox. The email includes the customer's name, mobile and address, so FormSubmit sees that data; set `OG_ORDER_EMAIL` to "" to turn it off.
 
 **Switching on online payment (Razorpay).** In `OG_PAYMENT` in `js/data.js`, set `keyId` to your Razorpay **Key ID** and `enabled: true`. The payment step then shows "Pay online" and opens Razorpay Checkout (UPI, cards, net banking). The order goes through only after the payment succeeds, and the payment ID is added to the WhatsApp message and to Razorpay's payment notes. Never put the Key Secret in this repo. To verify payments on a server (recommended once volume grows), add a small backend that creates Razorpay orders and checks the payment signature.
 
@@ -81,4 +86,4 @@ Names, phone numbers and addresses are never sent. Purchases show up under Repor
 
 **GitHub Pages (set up already).** `.github/workflows/pages.yml` publishes the site on every push to `main`. One-time setup: repo **Settings → Pages → Source: GitHub Actions**. The site appears at `https://<username>.github.io/<repo>/`.
 
-**Vercel or Netlify.** Import the repo, choose "Other" / no framework, leave the build command empty and set the output directory to the repo root.
+**Vercel (set up already).** The project imports this repo; `vercel.json` runs `scripts/stamp.sh` and serves the repo root. Every push to `main` redeploys.

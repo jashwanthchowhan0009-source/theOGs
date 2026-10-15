@@ -11,6 +11,12 @@
   const steps = { details: form, review: $("#stepReview"), pay: $("#stepPay"), done: $("#stepDone"), empty: $("#stepEmpty") };
   let details = null; // set once step 1 passes
 
+  // Pay by UPI QR (manual check by the owner). See OG_PAYMENT.upi in js/data.js.
+  const UPI = (window.OG_PAYMENT || {}).upi || {};
+  const upiOn = /^[\w.-]{2,}@[a-zA-Z]{2,}$/.test(UPI.id || "");
+  let method = payOnline ? "online" : upiOn ? "upi" : "whatsapp";
+  let utr = "";
+
   let toastTimer;
   function toast(msg) {
     const t = $("#toast");
@@ -175,24 +181,101 @@
   }
 
   /* ---------- Step 3: payment ---------- */
+  // The order ID is fixed once the customer reaches payment, so it can go in the UPI note.
+  const orderId = () => {
+    let id = store.get("pendingId", "");
+    if (!/^OG-\d{6}-[A-Z0-9]{4}$/.test(id)) { id = newId(); store.set("pendingId", id); }
+    return id;
+  };
+  const upiLink = (amount, id) =>
+    `upi://pay?pa=${UPI.id}&pn=${encodeURIComponent(UPI.name || "theOG's").replace(/'/g, "%27")}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent("Order " + id)}`;
+  function qrSvg(text) {
+    if (typeof window.qrcode !== "function") return "";
+    const qr = window.qrcode(0, "M");
+    qr.addData(text);
+    qr.make();
+    return qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+  }
+
   function renderPay() {
     const t = cart.totals();
     $("#payErr").textContent = "";
-    if (payOnline) {
-      $("#payBox").innerHTML = `
-        <label class="payopt is-on"><input type="radio" name="pay" checked>
-          <span><b>Pay online</b><small>UPI, cards, net banking and wallets, secured by Razorpay</small></span></label>`;
-      $("#confirmBtn").textContent = `Pay ${inr(t.total)} and place order`;
-    } else {
-      // Placeholder until the payment gateway is switched on in js/data.js (OG_PAYMENT).
-      $("#payBox").innerHTML = `
-        <div class="payopt payopt--soon" aria-disabled="true">
-          <span><b>Pay online</b><small>UPI, cards and net banking</small></span><em class="mono">Coming soon</em>
+    const opt = (key, title, sub) => `
+      <label class="payopt${method === key ? " is-on" : ""}"><input type="radio" name="pay" value="${key}" ${method === key ? "checked" : ""}>
+        <span><b>${title}</b><small>${sub}</small></span></label>`;
+    let html = "";
+    if (payOnline) html += opt("online", "Pay online", "UPI, cards, net banking and wallets, secured by Razorpay");
+    else html += `
+      <div class="payopt payopt--soon" aria-disabled="true">
+        <span><b>Pay online</b><small>Cards and net banking</small></span><em class="mono">Coming soon</em>
+      </div>`;
+    if (upiOn) html += opt("upi", "Pay by UPI", "Scan the QR or tap to pay with PhonePe, Google Pay, Paytm or any UPI app");
+    if (!payOnline && !upiOn) html += opt("whatsapp", "Confirm on WhatsApp, then pay by UPI", `Place your order now. We'll message you on WhatsApp to confirm it and share UPI details for ${inr(t.total)}.`);
+    if (method === "upi") {
+      const id = orderId();
+      const link = upiLink(t.total, id);
+      html += `
+      <div class="upi" id="upiBox">
+        <div class="upi__top">
+          <div class="upi__qr" role="img" aria-label="UPI QR code to pay ${inr(t.total)}">${qrSvg(link)}</div>
+          <div class="upi__info">
+            <p class="upi__amt">Pay <b>${inr(t.total)}</b></p>
+            <p class="upi__to mono">to ${esc(UPI.name || "theOG's")}<br>Note: Order ${esc(id)}</p>
+            <a class="btn btn--solid btn--block upi__app" href="${link}">Pay with UPI app</a>
+            <p class="upi__id mono">UPI ID <b>${esc(UPI.id)}</b> <button type="button" class="link" id="upiCopy">Copy</button></p>
+          </div>
         </div>
-        <label class="payopt is-on"><input type="radio" name="pay" checked>
-          <span><b>Confirm on WhatsApp, then pay by UPI</b><small>Place your order now. We'll message you on WhatsApp to confirm it and share UPI details for ${inr(t.total)}.</small></span></label>`;
-      $("#confirmBtn").textContent = `Place order · ${inr(t.total)}`;
+        <ol class="upi__steps">
+          <li>Scan the QR with any UPI app, or tap <b>Pay with UPI app</b> on your phone.</li>
+          <li>Pay exactly <b>${inr(t.total)}</b>.</li>
+          <li>Copy the UTR (12-digit transaction ID) from the payment receipt and enter it below.</li>
+        </ol>
+        <div class="field">
+          <label for="fUtr">UTR / UPI transaction ID</label>
+          <input id="fUtr" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="12 digits" value="${esc(utr)}">
+          <small class="err" id="utrErr"></small>
+          <small class="hintline">PhonePe: History, then the payment, then UTR. Google Pay: the payment, then UPI transaction ID.</small>
+        </div>
+      </div>`;
     }
+    $("#payBox").innerHTML = html;
+    $("#confirmBtn").textContent = method === "online" ? `Pay ${inr(t.total)} and place order`
+      : method === "upi" ? `I've paid · Place order` : `Place order · ${inr(t.total)}`;
+    $$('input[name="pay"]', $("#payBox")).forEach((r) => r.addEventListener("change", () => { method = r.value; renderPay(); }));
+    const u = $("#fUtr");
+    if (u) u.addEventListener("input", () => { u.value = u.value.replace(/\D/g, "").slice(0, 12); utr = u.value; $("#utrErr").textContent = ""; u.removeAttribute("aria-invalid"); });
+    const c = $("#upiCopy");
+    if (c) c.addEventListener("click", () => {
+      const done = () => toast("UPI ID copied");
+      if (navigator.clipboard) navigator.clipboard.writeText(UPI.id).then(done, () => toast(UPI.id));
+      else toast(UPI.id);
+    });
+  }
+
+  // Email a copy of the order to the owner (FormSubmit). Best effort: never blocks the order.
+  function emailOrder(o) {
+    const to = window.OG_ORDER_EMAIL;
+    if (!to || !window.fetch) return;
+    const a = o.address;
+    fetch(`https://formsubmit.co/ajax/${to}`, {
+      method: "POST",
+      keepalive: true,
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        _subject: `New order ${o.id} · ${inr(o.totals.total)}`,
+        _template: "box",
+        _captcha: "false",
+        Order: o.id,
+        Total: inr(o.totals.total),
+        Payment: `${o.payment.status}${o.payment.ref ? ` (${o.payment.ref})` : ""}`,
+        Items: o.lines.map((l) => `${l.name} (${l.color}) size ${l.size} x${l.qty} = ${inr(l.total)}`).join("; "),
+        Coupon: o.totals.coupon ? `${o.totals.coupon} −${inr(o.totals.discount)}` : "None",
+        Name: o.customer.name,
+        Mobile: "+91 " + o.customer.mobile,
+        Email: o.customer.email || "",
+        Address: `${a.house}, ${a.area}${a.landmark ? `, near ${a.landmark}` : ""}, ${a.city}, ${a.state} ${a.pincode} (${a.type})`
+      })
+    }).catch(() => {});
   }
 
   const newId = () => {
@@ -223,8 +306,17 @@
   confirmBtn.addEventListener("click", async () => {
     const lines = cart.lines();
     if (!lines.length || !details) return go("details");
+    if (method === "upi") {
+      const u = $("#fUtr");
+      if (!/^\d{12}$/.test(utr)) {
+        $("#utrErr").textContent = utr ? "The UTR has 12 digits. Check your payment receipt." : "Pay first, then enter the 12-digit UTR from your payment receipt.";
+        u.setAttribute("aria-invalid", "true");
+        u.focus();
+        return;
+      }
+    }
     const order = {
-      id: newId(),
+      id: method === "upi" ? orderId() : newId(),
       placedAt: new Date().toISOString(),
       lines: lines.map((l) => ({ id: l.id, name: l.product.name, color: l.product.color, size: l.size, qty: l.qty, price: l.product.price, total: l.total })),
       totals: cart.totals(lines),
@@ -232,7 +324,8 @@
       address: details.address,
       payment: { status: "Pending: send UPI details on WhatsApp" }
     };
-    if (payOnline) {
+    if (method === "upi") order.payment = { method: "UPI", status: "UPI paid, please verify", ref: "UTR " + utr };
+    if (method === "online") {
       confirmBtn.disabled = true;
       confirmBtn.textContent = "Opening payment…";
       try {
@@ -244,7 +337,9 @@
         renderPay();
         return;
       }
-    } else {
+    }
+    emailOrder(order);
+    if (method !== "online") {
       // Inside the click, so phones don't block it. The next screen has a button too.
       window.open(waLink(orderMessage(order)), "_blank", "noopener");
     }
@@ -254,9 +349,11 @@
     store.set("lastOrder", order);
     track("purchase", {
       transaction_id: order.id, value: order.totals.total, shipping: order.totals.shipping, coupon: order.totals.coupon || undefined,
-      payment_type: payOnline ? "online" : "whatsapp_upi", lines: lines.map((l) => ({ id: l.id, size: l.size, qty: l.qty }))
+      payment_type: method === "online" ? "online" : method === "upi" ? "upi_qr" : "whatsapp_upi", lines: lines.map((l) => ({ id: l.id, size: l.size, qty: l.qty }))
     });
     go("done");
+    store.del("pendingId");
+    utr = "";
     store.del("coupon");
     cart.clear();
   });
@@ -266,12 +363,15 @@
     const o = store.get("lastOrder", null);
     if (!o) return false;
     const paid = /^Paid/.test(o.payment.status);
+    const upi = o.payment.method === "UPI";
     steps.done.innerHTML = `
       <div class="done__badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
       <p class="mono eyebrow">Order ${esc(o.id)}</p>
-      <h1 id="doneTitle">${paid ? "Order placed" : "Order placed. One last step"}</h1>
+      <h1 id="doneTitle">${paid || upi ? "Order placed" : "Order placed. One last step"}</h1>
       <p class="done__lede">${paid
         ? `Payment received. We'll pack your tee${o.totals.count > 1 ? "s" : ""} and share tracking on WhatsApp at +91 ${o.customer.mobile}.`
+        : upi
+        ? `Thanks! We'll check your UPI payment of <b>${inr(o.totals.total)}</b> (${esc(o.payment.ref)}) and confirm your order on WhatsApp at +91 ${o.customer.mobile}. Send us the order on WhatsApp too, so we have it right away.`
         : `Send us your order on WhatsApp so we can confirm it and share UPI details for <b>${inr(o.totals.total)}</b>. A WhatsApp chat may have opened in a new tab. If it didn't, use the button below.`}</p>
       <a class="btn btn--solid btn--block btn--wa" href="${waLink(orderMessage(o))}" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-4A8 8 0 1 1 8 18.7L4 20Z"/></svg>

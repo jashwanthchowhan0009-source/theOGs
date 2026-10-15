@@ -81,8 +81,23 @@ window.OG_STORE = {
 window.OG_PAYMENT = {
   enabled: false,
   provider: "razorpay",
-  keyId: ""
+  keyId: "",
+
+  // Pay by UPI QR, confirmed by hand. Put your UPI ID (like yourname@ybl) in `id`
+  // and checkout shows a QR and a "Pay with UPI app" button for the exact amount,
+  // with the order ID in the payment note. The customer types their UTR
+  // (12-digit transaction ID) and you check it in your UPI app before shipping.
+  // Leave `id` empty to hide this option.
+  upi: {
+    id: "8897004533@ibl",
+    name: "P Jaswanth Chowhan"   // the name on the UPI account, as the customer's app shows it
+  }
 };
+
+/* Email copy of every order, sent through FormSubmit (free, no account).
+   The first order sends an "Activate form" email to this address: click it once,
+   and every order after that lands in your inbox. Leave empty to switch off. */
+window.OG_ORDER_EMAIL = "theogs1807@gmail.com";
 
 /* Visitor and sales tracking with Google Analytics 4 (free).
    Paste the Measurement ID (looks like G-XXXXXXXXXX) to switch it on.

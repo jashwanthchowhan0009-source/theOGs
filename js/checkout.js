@@ -34,8 +34,9 @@
         <p class="line__price">${inr(l.total)}</p>
       </li>`).join("");
     $("#sumTotals").innerHTML = `
+      ${t.savings ? `<div><dt>Original price</dt><dd>${inr(t.mrp)}</dd></div>
+      <div class="sum__save"><dt>Dussehra savings</dt><dd>−${inr(t.savings)}</dd></div>` : ""}
       <div><dt>Subtotal</dt><dd>${inr(t.subtotal)}</dd></div>
-      ${t.savings ? `<div class="sum__save"><dt>Dussehra savings</dt><dd>−${inr(t.savings)}</dd></div>` : ""}
       ${t.discount ? `<div class="sum__save"><dt>Coupon ${esc(t.coupon)}</dt><dd>−${inr(t.discount)}</dd></div>` : ""}
       <div><dt>Delivery</dt><dd>${t.shipping ? inr(t.shipping) : "Free"}</dd></div>
       <div class="sum__total"><dt>Total</dt><dd>${inr(t.total)}</dd></div>`;
@@ -207,7 +208,8 @@
   function orderMessage(o) {
     const L = [`*New order ${o.id}*`, ""];
     o.lines.forEach((l, i) => L.push(`${i + 1}. ${l.name} (${l.color}), size ${l.size} × ${l.qty} = ${inr(l.total)}`));
-    L.push("", `Subtotal: ${inr(o.totals.subtotal)}`, ...(o.totals.discount ? [`Coupon ${o.totals.coupon}: −${inr(o.totals.discount)}`] : []),
+    L.push("", ...(o.totals.savings ? [`Original price: ${inr(o.totals.mrp)}`, `Dussehra savings: −${inr(o.totals.savings)}`] : []),
+      `Subtotal: ${inr(o.totals.subtotal)}`, ...(o.totals.discount ? [`Coupon ${o.totals.coupon}: −${inr(o.totals.discount)}`] : []),
       `Delivery: ${o.totals.shipping ? inr(o.totals.shipping) : "Free"}`, `*Total: ${inr(o.totals.total)}*`,
       `Payment: ${o.payment.status}${o.payment.ref ? ` (${o.payment.ref})` : ""}`, "", "*Deliver to*", o.customer.name, `+91 ${o.customer.mobile}`);
     if (o.customer.email) L.push(o.customer.email);

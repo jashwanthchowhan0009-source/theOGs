@@ -43,6 +43,8 @@ assets/             logo, favicon, flags photo
 
 The site has no server, so an order reaches you on WhatsApp. When a customer places an order, WhatsApp opens with a message that has the order ID, items, total, name, mobile and full address, ready to send to the number in `OG_CONTACT`. The confirmation screen has a "Send order on WhatsApp" button in case the chat didn't open.
 
+**Coupons.** `OG_STORE.coupons` maps each code to the rupees it takes off the whole order (`{ "OG100": 100 }`). Codes aren't case-sensitive, and each order can use one. The product cards say "Have a coupon? Get ₹100 more off at checkout" without showing the code, and the checkout summary has the box to enter it. The coupon line is included in the WhatsApp order message. Set `coupons: {}` to hide all of it.
+
 **Delivery area.** `OG_STORE.regions` lists the states and the pincode prefixes that belong to them. Checkout rejects any pincode outside these and auto-fills the state. Change `OG_STORE.shipping` to charge for delivery (0 shows "Free").
 
 **Switching on online payment (Razorpay).** In `OG_PAYMENT` in `js/data.js`, set `keyId` to your Razorpay **Key ID** and `enabled: true`. The payment step then shows "Pay online" and opens Razorpay Checkout (UPI, cards, net banking). The order goes through only after the payment succeeds, and the payment ID is added to the WhatsApp message and to Razorpay's payment notes. Never put the Key Secret in this repo. To verify payments on a server (recommended once volume grows), add a small backend that creates Razorpay orders and checks the payment signature.

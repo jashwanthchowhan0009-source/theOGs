@@ -80,19 +80,32 @@
     }
   };
 
-  /* ---------- Coupon: one per order, codes and amounts in OG_STORE.coupons ---------- */
-  const COUPONS = SHOP.coupons || {};
-  const findCoupon = (code) => {
-    const key = Object.keys(COUPONS).find((k) => k.toUpperCase() === String(code).trim().toUpperCase());
-    return key ? { code: key, off: COUPONS[key] } : null;
-  };
+  /* ---------- Server checks: prices, coupons and the order email (api/checkout.js) ---------- */
+  const API = location.hostname.endsWith(".vercel.app") ? "/api/checkout" : (window.OG_API || "");
+  async function api(body) {
+    if (!API) throw new Error("offline");
+    const ctl = window.AbortController ? new AbortController() : null;
+    const timer = ctl && setTimeout(() => ctl.abort(), 9000);
+    try {
+      const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctl && ctl.signal });
+      const j = await r.json();
+      if (!j.ok) { const e = new Error(j.error || "Something went wrong."); e.server = true; throw e; }
+      return j;
+    } finally { if (timer) clearTimeout(timer); }
+  }
+
+  /* ---------- Coupon: one per order, checked by the server; no codes in the page ---------- */
   const coupon = {
-    enabled: Object.keys(COUPONS).length > 0,
-    maxOff: Math.max(0, ...Object.values(COUPONS)),
-    get() { const saved = store.get("coupon", null); return saved ? findCoupon(saved) : null; },
-    apply(code) {
-      const c = findCoupon(code);
-      if (c) { store.set("coupon", c.code); document.dispatchEvent(new CustomEvent("og:cart")); }
+    enabled: (SHOP.couponOff || 0) > 0,
+    maxOff: SHOP.couponOff || 0,
+    // { code, off } as the server confirmed it. The server re-checks it on every order.
+    get() { const c = store.get("coupon", null); return c && c.code && c.off > 0 ? c : null; },
+    async apply(code) {
+      const j = await api({ action: "quote", lines: read(), coupon: code });
+      if (j.couponError || !j.totals.coupon) return null;
+      const c = { code: j.totals.coupon, off: j.totals.discount };
+      store.set("coupon", c);
+      document.dispatchEvent(new CustomEvent("og:cart"));
       return c;
     },
     remove() { store.del("coupon"); document.dispatchEvent(new CustomEvent("og:cart")); }
@@ -194,5 +207,5 @@
     if (a) track("whatsapp_click", { link_text: a.textContent.trim().slice(0, 60) });
   });
 
-  window.OG = { track, coupon, store, inr, esc, waLink, product, cart, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline: !!(PAY.enabled && PAY.keyId) };
+  window.OG = { api, track, coupon, store, inr, esc, waLink, product, cart, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline: !!(PAY.enabled && PAY.keyId) };
 })();

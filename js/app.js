@@ -103,7 +103,6 @@
 
   /* ---------- The drop ---------- */
   const chosen = {};
-  const SHOW_CODE = window.OG_STORE.showCoupon || "";
   const orderText = (r, size) =>
     `Hi theOG's! I'd like to order the ${r.name} tee (${r.color}, ${r.fit}), size ${size}, at the ${r.offer || ""} price of ${inr(r.price)}.`.replace("the  price", "the price");
 
@@ -143,8 +142,7 @@
         </div>` : ""}
         ${OG.coupon.enabled && !out ? `<button type="button" class="coupon-tag" data-coupon-info>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h15A1.5 1.5 0 0 1 21 7.5V10a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 16.5V14a2 2 0 0 0 0-4V7.5Z"/><path d="M9.5 9.5h.01M14.5 14.5h.01M15 9l-6 6"/></svg>
-          ${SHOW_CODE ? `<span>Apply coupon code <b>${esc(SHOW_CODE)}</b> for <b>${inr(OG.coupon.maxOff)} OFF</b></span><small>tap to apply</small>`
-            : `<span>Apply coupon for <b>${inr(OG.coupon.maxOff)} OFF</b></span><small>at checkout</small>`}
+          <span>Apply coupon for <b>${inr(OG.coupon.maxOff)} OFF</b></span><small>at checkout</small>
         </button>` : ""}
         <dl class="specs mono">
           <div><dt>Colour</dt><dd>${r.color}</dd></div>
@@ -238,10 +236,7 @@
     });
     wa.addEventListener("click", (e) => { if (needSize()) e.preventDefault(); });
     const tag = $("[data-coupon-info]", card);
-    if (tag) tag.addEventListener("click", () => {
-      const c = SHOW_CODE && OG.coupon.apply(SHOW_CODE);
-      toast(c ? `${c.code} applied. ${inr(c.off)} off your order at checkout.` : `Got a coupon code? Enter it at checkout to get ${inr(OG.coupon.maxOff)} off your order.`);
-    });
+    if (tag) tag.addEventListener("click", () => toast(`Got a coupon code? Enter it at checkout to get ${inr(OG.coupon.maxOff)} off your order.`));
   });
 
   /* ---------- Cart drawer ---------- */

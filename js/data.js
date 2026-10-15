@@ -62,9 +62,10 @@ window.OG_CONTACT = {
 window.OG_STORE = {
   shipping: 0,          // delivery charge in rupees; 0 shows "Free"
   maxQty: 5,            // most of one tee and size per order
-  // Coupon codes and the rupees each takes off the whole order. Codes are not case-sensitive.
-  // Add, change or delete codes here; an empty list hides the coupon line and box.
-  coupons: {},
+  // Coupons. The codes are secret: they live only on the server, in the Vercel
+  // environment variable COUPONS (like "MYCODE:100"), and are checked there.
+  // This number is only what the site advertises ("₹100 OFF"); 0 hides the coupon box.
+  couponOff: 100,
   regions: [
     { name: "Andhra Pradesh", pins: ["51", "52", "53"] },
     { name: "Telangana", pins: ["50"] },
@@ -94,10 +95,9 @@ window.OG_PAYMENT = {
   }
 };
 
-/* Email copy of every order, sent through FormSubmit (free, no account).
-   The first order sends an "Activate form" email to this address: click it once,
-   and every order after that lands in your inbox. Leave empty to switch off. */
-window.OG_ORDER_EMAIL = "theogs1807@gmail.com";
+/* Server checks (prices, coupons, order email) run at theogs.vercel.app/api/checkout.
+   Pages on GitHub Pages call it there too. */
+window.OG_API = "https://theogs.vercel.app/api/checkout";
 
 /* Visitor and sales tracking with Google Analytics 4 (free).
    Paste the Measurement ID (looks like G-XXXXXXXXXX) to switch it on.

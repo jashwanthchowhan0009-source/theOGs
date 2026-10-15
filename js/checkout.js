@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const { store, inr, esc, waLink, cart, coupon, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline, track } = window.OG;
+  const { api, store, inr, esc, waLink, cart, coupon, cleanMobile, regionForPin, pinMatchesState, startPayment, payOnline, track } = window.OG;
   const SHOP = window.OG_STORE;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -53,15 +53,23 @@
   }
 
   /* ---------- Coupon ---------- */
-  $("#couponForm").addEventListener("submit", (e) => {
+  $("#couponForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const input = $("#fCoupon");
+    const btn = $("button", e.currentTarget);
     if (!input.value.trim()) { $("#couponErr").textContent = "Enter your coupon code."; return input.focus(); }
-    const c = coupon.apply(input.value);
-    if (!c) { $("#couponErr").textContent = "That code isn't valid. Check the spelling and try again."; return input.focus(); }
+    btn.disabled = true;
+    btn.textContent = "Checking…";
     $("#couponErr").textContent = "";
+    let c = null;
+    try { c = await coupon.apply(input.value); }
+    catch (err) {
+      $("#couponErr").textContent = err.server ? err.message : "Couldn't check the code. Check your internet and try again.";
+      return input.focus();
+    } finally { btn.disabled = false; btn.textContent = "Apply"; }
+    if (!c) { $("#couponErr").textContent = "That code isn't valid. Check the spelling and try again."; return input.focus(); }
     input.value = "";
-    toast(`${c.code} applied: ${inr(c.off)} off`);
+    toast(`Coupon applied: ${inr(c.off)} off`);
   });
   $("#couponOn").addEventListener("click", (e) => { if (e.target.closest("#couponRemove")) coupon.remove(); });
   $("#sumToggle").addEventListener("click", (e) => {
@@ -197,9 +205,49 @@
     return qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
   }
 
+  // The payment amount comes from the server (api/checkout.js), so prices and
+  // coupons can't be changed from the browser. `quote` caches the last answer.
+  let quote = null;
+  const quoteKey = () => JSON.stringify([cart.items(), (coupon.get() || {}).code || ""]);
+  function fetchQuote() {
+    const key = quoteKey();
+    if (fetchQuote.busy === key) return;
+    fetchQuote.busy = key;
+    const c = coupon.get();
+    api({ action: "quote", lines: cart.items(), coupon: c ? c.code : "" })
+      .then((j) => {
+        if (c && !j.totals.coupon) { store.del("coupon"); toast("That coupon no longer works, so it was removed."); }
+        else if (c && j.totals.discount !== c.off) store.set("coupon", { code: c.code, off: j.totals.discount });
+        quote = { key: quoteKey(), totals: j.totals };
+      })
+      .catch((err) => {
+        // Server unreachable: carry on at the listed prices, without a coupon.
+        if (c) { store.del("coupon"); toast("Couldn't check your coupon right now, so it was removed. You can still order."); }
+        quote = { key: quoteKey(), totals: cart.totals(), offline: true, error: err.server ? err.message : "" };
+      })
+      .finally(() => {
+        fetchQuote.busy = null;
+        if ((location.hash.slice(1) || "details") === "pay") { renderSummary(); renderPay(); }
+      });
+  }
+
   function renderPay() {
-    const t = cart.totals();
     $("#payErr").textContent = "";
+    if (!quote || quote.key !== quoteKey()) {
+      $("#payBox").innerHTML = `<p class="muted co__checking">Checking prices…</p>`;
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = "Checking prices…";
+      fetchQuote();
+      return;
+    }
+    if (quote.error) {
+      $("#payBox").innerHTML = `<p class="err">${esc(quote.error)}</p>`;
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = "Fix your cart to continue";
+      return;
+    }
+    confirmBtn.disabled = false;
+    const t = quote.totals;
     const opt = (key, title, sub) => `
       <label class="payopt${method === key ? " is-on" : ""}"><input type="radio" name="pay" value="${key}" ${method === key ? "checked" : ""}>
         <span><b>${title}</b><small>${sub}</small></span></label>`;
@@ -252,32 +300,6 @@
     });
   }
 
-  // Email a copy of the order to the owner (FormSubmit). Best effort: never blocks the order.
-  function emailOrder(o) {
-    const to = window.OG_ORDER_EMAIL;
-    if (!to || !window.fetch) return;
-    const a = o.address;
-    fetch(`https://formsubmit.co/ajax/${to}`, {
-      method: "POST",
-      keepalive: true,
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({
-        _subject: `New order ${o.id} · ${inr(o.totals.total)}`,
-        _template: "box",
-        _captcha: "false",
-        Order: o.id,
-        Total: inr(o.totals.total),
-        Payment: `${o.payment.status}${o.payment.ref ? ` (${o.payment.ref})` : ""}`,
-        Items: o.lines.map((l) => `${l.name} (${l.color}) size ${l.size} x${l.qty} = ${inr(l.total)}`).join("; "),
-        Coupon: o.totals.coupon ? `${o.totals.coupon} −${inr(o.totals.discount)}` : "None",
-        Name: o.customer.name,
-        Mobile: "+91 " + o.customer.mobile,
-        Email: o.customer.email || "",
-        Address: `${a.house}, ${a.area}${a.landmark ? `, near ${a.landmark}` : ""}, ${a.city}, ${a.state} ${a.pincode} (${a.type})`
-      })
-    }).catch(() => {});
-  }
-
   const newId = () => {
     const d = new Date();
     const ymd = String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
@@ -315,11 +337,13 @@
         return;
       }
     }
+    if (!quote || quote.key !== quoteKey() || quote.error) return renderPay();
     const order = {
       id: method === "upi" ? orderId() : newId(),
       placedAt: new Date().toISOString(),
       lines: lines.map((l) => ({ id: l.id, name: l.product.name, color: l.product.color, size: l.size, qty: l.qty, price: l.product.price, total: l.total })),
-      totals: cart.totals(lines),
+      totals: quote.totals,
+      coupon: quote.totals.coupon || "",
       customer: details.customer,
       address: details.address,
       payment: { status: "Pending: send UPI details on WhatsApp" }
@@ -338,7 +362,16 @@
         return;
       }
     }
-    emailOrder(order);
+    // The server re-prices the order and emails it to the owner.
+    try {
+      fetch(window.location.hostname.endsWith(".vercel.app") ? "/api/checkout" : window.OG_API, {
+        method: "POST", keepalive: true, headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "place", order: {
+          id: order.id, lines: order.lines.map((l) => ({ id: l.id, size: l.size, qty: l.qty })), coupon: order.coupon,
+          customer: order.customer, address: order.address, payment: order.payment
+        } })
+      }).catch(() => {});
+    } catch (e) { /* ignore */ }
     if (method !== "online") {
       // Inside the click, so phones don't block it. The next screen has a button too.
       window.open(waLink(orderMessage(order)), "_blank", "noopener");

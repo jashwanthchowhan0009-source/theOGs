@@ -12,7 +12,7 @@ window.OG_RELEASES = [
     fit: "Oversized",
     fabric: "240 GSM cotton",
     print: "Screen print",
-    sizes: ["M", "L", "XL"],
+    sizes: ["S", "M", "L", "XL", "XXXL"],
     mrp: 999,
     price: 799,
     offer: "Dussehra offer",
@@ -37,7 +37,7 @@ window.OG_RELEASES = [
     // Delete these two lines when it's back in stock.
     soldOut: true,
     soldOutNote: "Stay tuned, coming next month",
-    sizes: ["M", "L", "XL"],
+    sizes: ["S", "M", "L", "XL", "XXXL"],
     mrp: 999,
     price: 769,
     offer: "Dussehra offer",

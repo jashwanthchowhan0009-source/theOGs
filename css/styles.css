@@ -244,6 +244,7 @@ h2 { font: 900 clamp(36px, 6vw, 76px)/.92 var(--f-display); font-stretch: 118%; 
 .size:hover { border-color: var(--fg); transform: translateY(-1px); }
 .size[aria-checked="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .sizes.shake { animation: shake .4s; }
+@media (max-width: 520px) { .sizes { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; } .size { min-width: 0; padding: 0 4px; } }
 @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 .sizepick__hint { font-size: 13px; color: var(--danger); min-height: 1em; }
 

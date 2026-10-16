@@ -6,6 +6,9 @@
      ("CODE:100,OTHER:50"), never in this repo or in the page.
    - Every order is emailed to the owner from here, with the total worked out
      here, so the email is the number to trust when checking a UPI payment.
+     The email inbox is the order record.
+   - If CALLMEBOT_APIKEY is set, the same order also goes to the owner's
+     WhatsApp (WHATSAPP_PHONE, default 918897004533) through CallMeBot.
 
    POST { action: "quote", lines: [{ id, size, qty }], coupon }
      -> { ok, totals, couponError }
@@ -20,6 +23,7 @@ const ALLOWED_ORIGINS = [
   "https://theogs.vercel.app"
 ];
 const OWNER_EMAIL = process.env.ORDER_EMAIL || "theogs1807@gmail.com";
+const MAPS_RE = /^https:\/\/(www\.)?(google\.[a-z.]{2,8}\/maps|maps\.google\.[a-z.]{2,8}|maps\.app\.goo\.gl\/|goo\.gl\/maps\/)/i;
 
 // Load the shop data the site itself uses.
 function loadShop() {
@@ -88,9 +92,37 @@ async function emailOwner(order, priced) {
       "Name": clip(c.name, 60),
       "Mobile": "+91 " + clip(c.mobile, 10),
       "Email": clip(c.email, 80),
-      "Address": clip(`${a.house}, ${a.area}${a.landmark ? `, near ${a.landmark}` : ""}, ${a.city}, ${a.state} ${a.pincode} (${a.type})`, 400)
+      "Address": clip(`${a.house}, ${a.area}${a.landmark ? `, near ${a.landmark}` : ""}, ${a.city}, ${a.state} ${a.pincode} (${a.type})`, 400),
+      "Google Maps location": clip(a.map, 300)
     })
   });
+  return res.ok;
+}
+
+function orderText(order, priced) {
+  const t = priced.totals;
+  const c = order.customer || {};
+  const a = order.address || {};
+  const pay = order.payment || {};
+  return [
+    `*New order ${clip(order.id, 20)}*`,
+    ...priced.lines.map((l, i) => `${i + 1}. ${l.name} (${l.color}) ${l.size} x${l.qty} = ${inr(l.total)}`),
+    t.coupon ? `Coupon ${t.coupon}: -${inr(t.discount)}` : "",
+    `*Amount to receive: ${inr(t.total)}*`,
+    `Payment: ${clip(`${pay.status || ""}${pay.ref ? ` (${pay.ref})` : ""}`, 120)}`,
+    "",
+    clip(c.name, 60), `+91 ${clip(c.mobile, 10)}`,
+    clip(`${a.house}, ${a.area}${a.landmark ? `, near ${a.landmark}` : ""}, ${a.city}, ${a.state} ${a.pincode}`, 400),
+    `Location: ${clip(a.map, 300)}`
+  ].filter((x, i, arr) => x !== "" || arr[i - 1] !== "").join("\n");
+}
+
+async function whatsappOwner(order, priced) {
+  const key = process.env.CALLMEBOT_APIKEY;
+  if (!key) return false;
+  const phone = String(process.env.WHATSAPP_PHONE || "918897004533").replace(/\D/g, "");
+  const url = `https://api.callmebot.com/whatsapp.php?phone=%2B${phone}&text=${encodeURIComponent(orderText(order, priced))}&apikey=${encodeURIComponent(key)}`;
+  const res = await fetch(url);
   return res.ok;
 }
 
@@ -121,10 +153,10 @@ module.exports = async (req, res) => {
       const order = body.order || {};
       if (!/^OG-\d{6}-[A-Z0-9]{4}$/.test(String(order.id || ""))) return res.status(400).json({ ok: false, error: "Bad order ID." });
       if (!/^[6-9]\d{9}$/.test(String((order.customer || {}).mobile || ""))) return res.status(400).json({ ok: false, error: "Bad mobile number." });
+      if (!MAPS_RE.test(String((order.address || {}).map || "").trim())) return res.status(400).json({ ok: false, error: "Add your delivery location." });
       const priced = price(order.lines, order.coupon);
-      let emailed = false;
-      try { emailed = await emailOwner(order, priced); } catch (e) { emailed = false; }
-      return res.status(200).json({ ok: true, totals: priced.totals, emailed });
+      const [mail, wa] = await Promise.allSettled([emailOwner(order, priced), whatsappOwner(order, priced)]);
+      return res.status(200).json({ ok: true, totals: priced.totals, emailed: mail.value === true, whatsapp: wa.value === true });
     }
     return res.status(400).json({ ok: false, error: "Unknown action." });
   } catch (err) {

@@ -133,6 +133,38 @@
     } catch (e) { /* the lookup is a convenience; typing the town works without it */ }
   }
 
+  // Google Maps location: from the phone's GPS, or a pasted Maps link. Required.
+  const MAPS_RE = /^https:\/\/(www\.)?(google\.[a-z.]{2,8}\/maps|maps\.google\.[a-z.]{2,8}|maps\.app\.goo\.gl\/|goo\.gl\/maps\/)/i;
+  const mapOk = (v) => MAPS_RE.test(v.trim());
+  const locHint = $("#locHint");
+  const LOC_HINT = locHint.textContent;
+  function showLoc(link, note) {
+    locHint.innerHTML = link ? `${esc(note || "Location added.")} <a href="${esc(link)}" target="_blank" rel="noopener">Check it on the map</a>` : esc(note || LOC_HINT);
+  }
+  if (mapOk(f("map").value)) showLoc(f("map").value.trim(), "Saved location.");
+  $("#locBtn").addEventListener("click", () => {
+    const btn = $("#locBtn");
+    if (!navigator.geolocation) return setErr(f("map"), "This browser can't share location. Paste a Google Maps link instead.");
+    btn.disabled = true;
+    $("span", btn).textContent = "Finding you…";
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+      const link = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
+      f("map").value = link;
+      setErr(f("map"), "");
+      showLoc(link, `Location added (accurate to about ${Math.max(5, Math.round(accuracy))} m).`);
+      btn.disabled = false;
+      $("span", btn).textContent = "Update my location";
+    }, (err) => {
+      btn.disabled = false;
+      $("span", btn).textContent = "Use my current location";
+      setErr(f("map"), err.code === 1
+        ? "Location is blocked. Allow location for this site in your browser settings, or paste a Google Maps link."
+        : "Couldn't get your location. Try again outdoors, or paste a Google Maps link.");
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+  });
+  f("map").addEventListener("input", () => { if (mapOk(f("map").value)) { setErr(f("map"), ""); showLoc(f("map").value.trim(), "Location added."); } else showLoc(""); });
+
   const rules = [
     ["name", (v) => (v.trim().replace(/[^A-Za-zऀ-෿]/g, "").length >= 2 ? "" : "Enter your full name.")],
     ["mobile", (v) => (cleanMobile(v) ? "" : "Enter a 10-digit Indian mobile number, like 98765 43210.")],
@@ -141,7 +173,8 @@
     ["state", (v) => (!v ? "Choose your state." : regionForPin(f("pincode").value) && !pinMatchesState(f("pincode").value, v) ? `This pincode isn't in ${v}. Check the pincode or state.` : "")],
     ["house", (v) => (v.trim().length >= 2 ? "" : "Enter your flat or house number and building.")],
     ["area", (v) => (v.trim().length >= 3 ? "" : "Enter your area, street or locality.")],
-    ["city", (v) => (v.trim().length >= 2 ? "" : "Enter your town or city.")]
+    ["city", (v) => (v.trim().length >= 2 ? "" : "Enter your town or city.")],
+    ["map", (v) => (mapOk(v) ? "" : v.trim() ? "That isn't a Google Maps link. Tap \"Use my current location\", or copy the link from Google Maps." : "Add your location: tap \"Use my current location\", or paste a Google Maps link.")]
   ];
   rules.forEach(([name, test]) => {
     f(name).addEventListener("blur", () => { if (f(name).getAttribute("aria-invalid") === "true" || f(name).value) setErr(f(name), test(f(name).value)); });
@@ -160,7 +193,8 @@
       customer: { name: f("name").value.trim(), mobile, email: f("email").value.trim() },
       address: {
         house: f("house").value.trim(), area: f("area").value.trim(), landmark: f("landmark").value.trim(),
-        city: f("city").value.trim(), state: f("state").value, pincode: f("pincode").value, type: f("type").value
+        city: f("city").value.trim(), state: f("state").value, pincode: f("pincode").value, type: f("type").value,
+        map: f("map").value.trim()
       }
     };
     if ($("#fRemember").checked) store.set("customer", { ...details.customer, ...details.address });
@@ -176,6 +210,7 @@
       <p><b>${esc(c.name)}</b> <span class="tag mono">${esc(a.type)}</span></p>
       <p>${esc(a.house)}, ${esc(a.area)}${a.landmark ? `<br>Landmark: ${esc(a.landmark)}` : ""}</p>
       <p>${esc(a.city)}, ${esc(a.state)} ${esc(a.pincode)}</p>
+      ${a.map ? `<p><a class="link" href="${esc(a.map)}" target="_blank" rel="noopener">See delivery location on Google Maps</a></p>` : ""}
       <p class="mono">+91 ${c.mobile.slice(0, 5)} ${c.mobile.slice(5)}${c.email ? ` · ${esc(c.email)}` : ""}</p>`;
     $("#reviewItems").innerHTML = cart.lines().map((l) => `
       <li class="cline">
@@ -321,6 +356,7 @@
     L.push(`${o.address.house}, ${o.address.area}`);
     if (o.address.landmark) L.push(`Landmark: ${o.address.landmark}`);
     L.push(`${o.address.city}, ${o.address.state} ${o.address.pincode} (${o.address.type})`);
+    if (o.address.map) L.push(`Location: ${o.address.map}`);
     return L.join("\n");
   }
 
